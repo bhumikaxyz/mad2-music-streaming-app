@@ -1,7 +1,7 @@
 import os
 from flask import request, jsonify
 from musicapp import app
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource, reqparse, marshal_with, fields, marshal
 from musicapp.models import *
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -22,7 +22,33 @@ def get_audio_duration(file_path):
 
 
 api = Api()
-        
+api.prefix = '/api'    
+
+#----------------------------------------- Fields ---------------------------------------------------
+
+user_fields = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'username': fields.String,
+    'password_hash': fields.String,
+    'is_creator': fields.Boolean,
+    'is_flagged': fields.Boolean
+}
+
+song_fields = {
+    'id': fields.Integer,
+    'title': fields.String,
+    'filename': fields.String,
+    'duration': fields.String,
+    'lyrics': fields.String,   
+    'album_id': fields.Integer,
+    'artist_id': fields.Integer,
+    'creator_id': fields.Integer,
+    'timestamp': fields.DateTime(dt_format='rfc822'),
+    'is_flagged': fields.Boolean
+
+}
+
 #======================================= Registration and Login =========================================
 
 register_parser = reqparse.RequestParser()
@@ -33,6 +59,7 @@ register_parser.add_argument('confirm_password', type=str, required=True, help='
 
 
 class UserRegistration(Resource):
+    @marshal_with(user_fields)
     def post(self):
         args = register_parser.parse_args()
 
@@ -48,10 +75,10 @@ class UserRegistration(Resource):
             user = User(name=args['name'], username=args['username'], password_hash=hashed_password)
             db.session.add(user)
             db.session.commit()
-            return {'message': 'Account successfully created for user.'}, 201
+            return user, 201
         
 
-api.add_resource(UserRegistration, '/api/register')
+api.add_resource(UserRegistration, '/register')
 
 
 login_parser = reqparse.RequestParser()
@@ -64,26 +91,22 @@ class UserLogin(Resource):
         args = login_parser.parse_args()
         hashed_password = generate_password_hash(args['password'])
         user = User.query.filter_by(username=args['username']).first()
-        check_password_hash(hashed_password, args['password'])
-        if user and check_password_hash:
-            return {'message': 'Login successful.'}, 201
+        if user:
+            if user.is_flagged:
+                return {'message': 'You are not allowed to use this platform'}, 404
+            else:
+                check_password_hash(hashed_password, args['password'])
+                if check_password_hash:
+                    return {'message': 'Login successful.'}, 201
+                else:
+                    return {'message': 'Incorrect username or password.'}, 404
         else:
-            return {'message': 'Incorrect username or password.'}, 404
+            return {'message': 'Incorrect username or password.'}, 404    
 
 
-api.add_resource(UserLogin, '/api/login')
+api.add_resource(UserLogin, '/login')
 
-
-class AdminLogin(Resource):
-    def post(self):
-        args = login_parser.parse_args()
-        if args['username']=='admin' and  args['password']=='admin':
-            return {'message': 'You are now logged in as admin.'}, 201
-        else:
-            return {'message': 'Incorrect username or password.'}, 404
-        
-api.add_resource(AdminLogin, '/api/admin_login')      
-
+#============================================== USER =====================================================
 
 creator_register_parser = reqparse.RequestParser()
 creator_register_parser.add_argument('response', type=bool, default=False)
@@ -104,17 +127,17 @@ class CreatorRegistration(Resource):
 
 
 
-api.add_resource(CreatorRegistration, '/api/register_creator/<int:user_id>')
+api.add_resource(CreatorRegistration, '/register_creator/<int:user_id>')
 
-#============================================== USER =====================================================
 
 profile_parser = reqparse.RequestParser()
-profile_parser.add_argument('name', type=str, required=True, help='Please provide a value')
-profile_parser.add_argument('username', type=str, required=True, help='Please provide a value')
-profile_parser.add_argument('current_password', type=str, required=True, help='Please provide a value')
-profile_parser.add_argument('new_password', type=str, required=True, help='Please provide a value')
+profile_parser.add_argument('name', type=str)
+profile_parser.add_argument('username', type=str)
+profile_parser.add_argument('current_password')
+profile_parser.add_argument('new_password')
 
 class UpdateProfile(Resource):
+    @marshal_with(user_fields)
     def put(self, user_id):
         args = profile_parser.parse_args()
         user = User.query.get(user_id)
@@ -125,16 +148,68 @@ class UpdateProfile(Resource):
                 hashed_password = generate_password_hash(args['new_password'])
                 user.password_hash = hashed_password
                 db.session.commit()
-                return {'message': 'Profile successfully updated.'}, 201
+                return user, 201
             else:
                 return {'message': 'Incorrect current password.'}, 404
         else:
             return {'message': 'User not found.'}, 404
         
 
-api.add_resource(UpdateProfile, '/api/update_profile/<int:user_id>')
+api.add_resource(UpdateProfile, '/update_profile/<int:user_id>')
+
+
+# ========================================== ADMIN ====================================================
+
+class AdminLogin(Resource):
+    def post(self):
+        args = login_parser.parse_args()
+        if args['username']=='admin' and  args['password']=='admin':
+            return {'message': 'You are now logged in as admin.'}, 201
+        else:
+            return {'message': 'Incorrect username or password.'}, 404
+        
+api.add_resource(AdminLogin, '/admin_login')      
+
+
+flag_parser = reqparse.RequestParser()
+flag_parser.add_argument('response', type=bool, default=False)
+
+class FlagSong(Resource):
+    def put(self, song_id):
+        args = flag_parser.parse_args()
+        song = Song.query.get(song_id)
+        if song:
+            song.is_flagged = args['response']
+            db.session.commit()
+            return {'song': marshal(song, song_fields)}, 200
+        else:
+            return {'message': 'song not found.'}    
+        
+
+api.add_resource(FlagSong, '/flag_song/<int:song_id>')
+
+
+class FlagCreator(Resource):
+    def put(self, user_id):
+        args = flag_parser.parse_args()
+        creator = User.query.get(user_id)
+        if creator:
+            creator.is_flagged = args['response']
+            db.session.commit()
+            return {'user': marshal(creator, user_fields)}, 200
+        else:
+            return {'message': 'user not found.'}    
+        
+        
+
+api.add_resource(FlagCreator, '/flag_creator/<int:user_id>')
+
 
 # ================================================= SONGS ===================================================
+song_parser = reqparse.RequestParser()
+song_parser.add_argument('title', type=str)
+song_parser.add_argument('artist', type=str)
+song_parser.add_argument('lyrics', type=str)
 
 class SongListResource(Resource):
     def get(self):
@@ -147,11 +222,15 @@ class SongListResource(Resource):
 
         return {'songs': songs_list}, 201    
     
+    @marshal_with(song_fields)
     def post(self):
-        args = song_parser.parse_args()
-        artist_id = Artist.query.filter(name=args['artist'])
-        song = Song(title=args['title'], lyrics=args['lyrics'], artist_id=artist_id)
+        title = request.form.get("title")
+        lyrics = request.form.get("lyrics")
+        artist = request.form.get("artist")
 
+        artist = Artist.query.filter_by(name=artist).first()
+        song = Song(title=title, lyrics=lyrics, artist_id=artist.id)
+       
         if 'file' not in request.files:
             return {'message': 'No file part'}, 400
 
@@ -161,39 +240,32 @@ class SongListResource(Resource):
         
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-
+        song.filename = filename
         duration = get_audio_duration(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         song.duration = duration
 
         db.session.add(song)
         db.session.commit()
-
-        return {
-                'message': 'File successfully uploaded'
-                # 'title': song.title,
-                # 'filename': song.filename,
-                # 'artist_id': song.artist_id,
-                # 'duration': song.duration
-            }, 201
+        return song, 201
 
     
-api.add_resource(SongListResource, '/api/songs')    
+api.add_resource(SongListResource, '/songs')    
 
-
-song_parser = reqparse.RequestParser()
-song_parser.add_argument('title', type=str)
-song_parser.add_argument('artist', type=str)
-song_parser.add_argument('lyrics', type=str)
 
 class SongResource(Resource):
+    # @marshal_with(song_fields)
     def get(self, song_id):
         song = Song.query.get(song_id)
         if song:
-            artist = Artist.query.get(song.artist_id)
-            song_data = {'id': song.id, 'title': song.title, 'filename': song.filename, 'duration': song.duration, 'lyrics': song.lyrics, 'artist': artist.name}
-            return {'song': song_data}, 201
+            return {'song': marshal(song, song_fields)}, 201
         else:
             return {'message': 'Song not found'}, 404 
+        # if song:
+        #     artist = Artist.query.get(song.artist_id)
+        #     song_data = {'id': song.id, 'title': song.title, 'filename': song.filename, 'duration': song.duration, 'lyrics': song.lyrics, 'artist': artist.name}
+        #     return {'song': song_data}, 201
+        # else:
+        #     return {'message': 'Song not found'}, 404 
         
 
     def put(self, song_id):
@@ -217,32 +289,38 @@ class SongResource(Resource):
 
 
     
-api.add_resource(SongResource, '/api/song/<int:song_id>')
+api.add_resource(SongResource, '/song/<int:song_id>')
 
 
-# filter_parser = reqparse.RequestParser()
-# filter_parser.add_argument('filter_type', type=str, choices=('title', 'artist', 'rating') ,required=True, help='Please provide a value')
-# filter_parser.add_argument('filter_value', type=str, required=True, help='Please provide a value')
+filter_parser = reqparse.RequestParser()
+filter_parser.add_argument('filter_type', type=str, choices=('title', 'artist', 'rating') ,required=True, help='Please provide a value')
+filter_parser.add_argument('filter_value', type=str, required=True, help='Please provide a value')
 
-# class FilteredSongs(Resource):
-#     args = filter_parser.parse_args()
-#     filter_type = args['filter_type']
-#     filter_value = args['filter_value']
+class FilteredSongs(Resource):
+    def get(self):
+        args = filter_parser.parse_args()
+        query = Song.query
+        filter_type = args['filter_type']
+        filter_value = args['filter_value']
 
-#     if filter_value:
-#             if filter_type == 'artist':
-#                 songs = songs.join(Artist).filter(Artist.name.ilike(f"%{filter_value}%"))
-#             elif filter_type == 'title':
-#                 songs = songs.filter(Song.title.ilike(f"%{filter_value}%"))
-#             elif filter_type == 'rating':
-#                 try:
-#                     rating = float(filter_value)
-#                     songs = songs.join(Interactions).group_by(Song.id).having(db.func.avg(Interactions.rating) == rating)
-#                 except ValueError:
-#                     flash('Invalid rating value. Please enter a numeric value.', 'danger')
+        if filter_type:
+            if not filter_value:
+                return {'message': 'Please specify a value to search'}, 404
+            elif filter_value:
+                    if filter_type == 'artist':
+                        songs = songs.join(Artist).filter(Artist.name.ilike(f"%{filter_value}%"))
+                    elif filter_type == 'title':
+                        songs = songs.filter(Song.title.ilike(f"%{filter_value}%"))
+                    elif filter_type == 'rating':
+                        try:
+                            rating = float(filter_value)
+                            songs = songs.join(Interactions).group_by(Song.id).having(db.func.avg(Interactions.rating) == rating)
+                        except ValueError:
+                            # flash('Invalid rating value. Please enter a numeric value.', 'danger')
+                            pass
 
 
-# =============================================== PLAYLISTS ===================================================
+# =============================================== PLAYLISTS ================================================
 
 class PlaylistListResource(Resource):
     def get(self):
@@ -255,7 +333,7 @@ class PlaylistListResource(Resource):
         return {'playlists': playlists_list}, 201    
     
 
-api.add_resource(PlaylistListResource, '/api/playlists')
+api.add_resource(PlaylistListResource, '/playlists')
 
 playlist_parser = reqparse.RequestParser()
 playlist_parser.add_argument('name', type=str, required=True, help='Please provide a value')
@@ -265,7 +343,8 @@ class PlaylistResource(Resource):
     def get(self, playlist_id):
         playlist = Playlist.query.get_or_404(playlist_id)
         if playlist:
-            playlist_data = {'id': playlist.id, 'name': playlist.name}
+            song_list = [song for song in playlist.songs]
+            playlist_data = {'id': playlist.id, 'name': playlist.name, 'songs': song_list}
             return {'playlist': playlist_data}, 201
         else:
             return {'message': 'Playlist not found.'}, 404
@@ -290,7 +369,7 @@ class PlaylistResource(Resource):
             return {'message': 'Playlist not found'}, 404  
 
 
-api.add_resource(PlaylistResource, '/api/playlist/<int:playlist_id>')
+api.add_resource(PlaylistResource, '/playlist/<int:playlist_id>')
 
 
 
@@ -308,7 +387,7 @@ class AlbumListResource(Resource):
         return {'albums': albums_list}, 201    
         
 
-api.add_resource(AlbumListResource, '/api/albums')    
+api.add_resource(AlbumListResource, '/albums')    
 
 album_parser = reqparse.RequestParser()
 album_parser.add_argument('name', type=str, required=True, help='Please provide a value')
@@ -318,13 +397,15 @@ album_parser.add_argument('artist', type=str, required=True, help='Please provid
 
 class AlbumResource(Resource):
     def get(self, album_id):
-        album = Album.query.get_or_404(album_id)
+        print("hiii")
+        album = Album.query.get(album_id)
+        print(album)
         if album:
-            artist = Artist.query.get_or_404(album.artist_id)
-            album_data = {'id': album.id, 'name': album.name, 'genre': album.genre, 'artist': artist.name}
+            artist = Artist.query.get(album.artist_id)
+            album_data = {'id': album.id, 'name': album.name, 'genre': album.genre, 'artist': artist.name, 'songs': album.songs}
             return {'album': album_data}, 201
         else:
-            return {'message': 'Album not found.'}
+            return {'message': 'Album not found.'}, 404
 
     def put(self, album_id):
         args = album_parser.parse_args()
@@ -351,5 +432,4 @@ class AlbumResource(Resource):
             return {'message': 'Album not found'}, 404
         
 
-
-api.add_resource(AlbumResource, '/api/album/<int:album_id>')
+api.add_resource(AlbumResource, '/album/<int:album_id>')
