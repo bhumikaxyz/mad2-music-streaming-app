@@ -3,9 +3,11 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
-from musicapp.config import Config
+from .config import Config
 from sqlalchemy.sql import func 
 from flask_cors import CORS
+from flask_security import Security, auth_required
+from sec import datastore
 
 
 app = Flask(__name__)
@@ -13,6 +15,7 @@ CORS(app)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+app.security = Security(app, datastore)
 
 
 login_manager = LoginManager(app)

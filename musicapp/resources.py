@@ -24,7 +24,7 @@ def get_audio_duration(file_path):
 api = Api()
 api.prefix = '/api'    
 
-#----------------------------------------- Fields ---------------------------------------------------
+#----------------------------------------- Output Fields ---------------------------------------------------
 
 user_fields = {
     'id': fields.Integer,
@@ -206,28 +206,21 @@ api.add_resource(FlagCreator, '/flag_creator/<int:user_id>')
 
 
 # ================================================= SONGS ===================================================
-song_parser = reqparse.RequestParser()
-song_parser.add_argument('title', type=str)
-song_parser.add_argument('artist', type=str)
-song_parser.add_argument('lyrics', type=str)
-
 class SongListResource(Resource):
     def get(self):
         songs = Song.query.filter_by(is_flagged=False).order_by(Song.timestamp.desc()).all()
         songs_list = []
         for song in songs:
-            artist = Artist.query.get(song.artist_id)
-            song_data = {'id': song.id, 'title': song.title, 'filename': song.filename, 'duration': song.duration, 'lyrics': song.lyrics, 'artist': artist.name}
-            songs_list.append(song_data)
-
+            songs_list.append(marshal(song, song_fields))
+    
         return {'songs': songs_list}, 201    
     
+
     @marshal_with(song_fields)
     def post(self):
         title = request.form.get("title")
         lyrics = request.form.get("lyrics")
         artist = request.form.get("artist")
-
         artist = Artist.query.filter_by(name=artist).first()
         song = Song(title=title, lyrics=lyrics, artist_id=artist.id)
        
@@ -243,7 +236,6 @@ class SongListResource(Resource):
         song.filename = filename
         duration = get_audio_duration(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         song.duration = duration
-
         db.session.add(song)
         db.session.commit()
         return song, 201
@@ -252,20 +244,19 @@ class SongListResource(Resource):
 api.add_resource(SongListResource, '/songs')    
 
 
+song_parser = reqparse.RequestParser()
+song_parser.add_argument('title', type=str)
+song_parser.add_argument('artist', type=str)
+song_parser.add_argument('lyrics', type=str)
+
+
 class SongResource(Resource):
-    # @marshal_with(song_fields)
     def get(self, song_id):
         song = Song.query.get(song_id)
         if song:
             return {'song': marshal(song, song_fields)}, 201
         else:
             return {'message': 'Song not found'}, 404 
-        # if song:
-        #     artist = Artist.query.get(song.artist_id)
-        #     song_data = {'id': song.id, 'title': song.title, 'filename': song.filename, 'duration': song.duration, 'lyrics': song.lyrics, 'artist': artist.name}
-        #     return {'song': song_data}, 201
-        # else:
-        #     return {'message': 'Song not found'}, 404 
         
 
     def put(self, song_id):
@@ -273,11 +264,18 @@ class SongResource(Resource):
         song = Song.query.get(song_id)
         song.title = args['title']
         song.lyrics = args['lyrics']
-        artist = Artist.query.get(song.artist_id)
+
+        artist = Artist.query.filter_by(name=args['artist']).first()
+        if not artist:
+            artist = Artist(name=args['artist'])
+            db.session.add(artist)
+            db.session.commit()
+
         song.artist_id = artist.id
         db.session.commit()
-        return {'message': 'Song updated successfully'}, 201
+        return {'song': marshal(song, song_fields)}, 200
     
+
     def delete(self, song_id):
         song = Song.query.get(song_id)
         if song:
@@ -299,7 +297,8 @@ filter_parser.add_argument('filter_value', type=str, required=True, help='Please
 class FilteredSongs(Resource):
     def get(self):
         args = filter_parser.parse_args()
-        query = Song.query
+        query = Song.query.filter_by(is_flagged=False).order_by(Song.timestamp.desc())
+        # songs = Song.query.filter_by(is_flagged=False).order_by(Song.timestamp.desc()).all()
         filter_type = args['filter_type']
         filter_value = args['filter_value']
 
@@ -308,16 +307,68 @@ class FilteredSongs(Resource):
                 return {'message': 'Please specify a value to search'}, 404
             elif filter_value:
                     if filter_type == 'artist':
-                        songs = songs.join(Artist).filter(Artist.name.ilike(f"%{filter_value}%"))
+                        query = query.join(Artist).filter(Artist.name.ilike(f"%{filter_value}%"))
                     elif filter_type == 'title':
-                        songs = songs.filter(Song.title.ilike(f"%{filter_value}%"))
+                        query = query.filter(Song.title.ilike(f"%{filter_value}%"))
                     elif filter_type == 'rating':
                         try:
                             rating = float(filter_value)
-                            songs = songs.join(Interactions).group_by(Song.id).having(db.func.avg(Interactions.rating) == rating)
+                            query = query.join(Interactions).group_by(Song.id).having(db.func.avg(Interactions.rating) == rating)
                         except ValueError:
-                            # flash('Invalid rating value. Please enter a numeric value.', 'danger')
-                            pass
+                            return {'message': 'Invalid rating value.'}, 404
+                           
+        filtered_songs = query.all()
+        songs_list = []
+        for song in filtered_songs:
+            songs_list.append(marshal(song, song_fields))
+
+        return {'songs': songs_list}, 201    
+
+api.add_resource(FilteredSongs, '/songs/filter')
+
+
+like_parser = reqparse.RequestParser()
+like_parser.add_argument('like', type=bool, default=False)
+
+class LikeSongResource(Resource):
+    def post(self, song_id):
+        args = like_parser.parse_args()
+        song = Song.query.get(song_id)
+        # user = current_user
+        like = args['like']
+        existing_interaction = Interactions.query.filter_by(song_id=song.id).first()
+        if existing_interaction:
+            existing_interaction.liked = args['like']
+        else:
+            new_interaction = Interactions(song_id=song.id, liked=like)
+            db.session.add(new_interaction)
+
+        db.session.commit()
+        return {'song': marshal(song, song_fields)}, 200
+
+api.add_resource(LikeSongResource, '/like/<int:song_id>')
+
+
+rating_parser = reqparse.RequestParser()
+rating_parser.add_argument('rating', type=float, choices=[1, 2, 3, 4, 5], default=0)
+
+class RateSongResource(Resource):
+    def post(self, song_id):
+        args = rating_parser.parse_args()
+        song = Song.query.get(song_id)
+        # user = current_user
+        rating = args['rating']
+        existing_interaction = Interactions.query.filter_by(song_id=song.id).first()
+        if existing_interaction:
+            existing_interaction.rating = rating
+        else:
+            new_interaction = Interactions(song_id=song.id, rating=rating)
+            db.session.add(new_interaction)
+
+        db.session.commit()
+        return {'song': marshal(song, song_fields)}, 200
+
+api.add_resource(RateSongResource, '/rate/<int:song_id>')
 
 
 # =============================================== PLAYLISTS ================================================

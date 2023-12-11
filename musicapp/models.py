@@ -1,6 +1,6 @@
 from datetime import datetime
 from musicapp import db, login_manager
-from flask_login import UserMixin
+from flask_security import UserMixin, RoleMixin
 from sqlalchemy.sql import func 
 
 
@@ -9,27 +9,41 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
+role_user = db.Table('role_user',
+                     db.Column('role_id', db.Integer, db.ForeignKey('role.id'), primary_key=True),
+                     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True))
+
+
+
+playlist_song = db.Table('playlist_song',
+                         db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id'), primary_key=True),
+                         db.Column('song_id', db.Integer, db.ForeignKey('song.id'), primary_key=True))
+
+
+
 class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key = True, autoincrement=True)
     name = db.Column(db.String(100), nullable = False)
     username = db.Column(db.String(20), unique = True, nullable = False)
     password_hash = db.Column(db.String(50), nullable = False)
     is_creator = db.Column(db.Boolean, default = False)
     is_flagged = db.Column(db.Boolean, default = False)
+    fs_uniquifier = db.Column(db.String, unique=True, nullable=False)
 
     song = db.relationship('Song', backref='creator', lazy=True)
     playlists = db.relationship('Playlist', backref = 'user', lazy = True)
     albums = db.relationship('Album', backref='creator', lazy=True)
     interactions = db.relationship('Interactions', backref = 'user', lazy = 'dynamic', cascade='all, delete-orphan')
-
+    roles = db.relationship('Role', secondary='role_user', backref='users', lazy='dynamic')
 
     def __repr__(self):
         return f'User {self.username}'
     
 
-playlist_song = db.Table('playlist_song',
-                         db.Column('playlist_id', db.Integer, db.ForeignKey('playlist.id'), primary_key=True),
-                         db.Column('song_id', db.Integer, db.ForeignKey('song.id'), primary_key=True))
+class Role(db.Model, RoleMixin):
+    id = db.Column(db.Integer, primary_key = True)
+    username = db.Column(db.String(20), unique = True, nullable = False)
+    description = db.Column(db.String)
 
 
 class Song(db.Model):
