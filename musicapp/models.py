@@ -1,12 +1,8 @@
 from datetime import datetime
-from musicapp import db, login_manager
+from musicapp import db
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.sql import func 
 
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
 
 
 role_user = db.Table('role_user',
