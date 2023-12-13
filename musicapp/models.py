@@ -30,7 +30,7 @@ class User(db.Model, UserMixin):
     playlists = db.relationship('Playlist', backref = 'user', lazy = True)
     albums = db.relationship('Album', backref='creator', lazy=True)
     interactions = db.relationship('Interactions', backref = 'user', lazy = 'dynamic', cascade='all, delete-orphan')
-    roles = db.relationship('Role', secondary='role_user', backref='users', lazy='dynamic')
+    roles = db.relationship('Role', secondary='role_user', backref='users')
 
     def __repr__(self):
         return f'User {self.username}'

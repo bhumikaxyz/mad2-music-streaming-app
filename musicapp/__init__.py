@@ -21,7 +21,6 @@ from .sec import datastore
 app.security = Security(app, datastore)
 
 
-from musicapp import routes
 # from musicapp.models import User, Song, Album, Artist, Playlist, Interactions
 
 from musicapp.resources import api
