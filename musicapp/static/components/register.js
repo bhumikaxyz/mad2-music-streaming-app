@@ -12,7 +12,7 @@ const Register = Vue.component('Register', {
       >
         <img
           class="mb-4"
-          src="{{ url_for('static', filename = '/images/musical-note.png') }}"
+          src="static/images/musical-note.png"
           alt="Logo"
           width="90"
           height="90"
@@ -67,3 +67,5 @@ const Register = Vue.component('Register', {
     
     
 });
+
+export default Register;

@@ -11,7 +11,7 @@ const Login = Vue.component("Login", {
     >
       <img
         class="mb-4"
-        src="{{ url_for('static', filename = '/images/musical-note.png') }}"
+        src="static/images/musical-note.png"
         alt="Logo"
         width="90"
         height="90"
@@ -54,7 +54,7 @@ const Login = Vue.component("Login", {
         <label class="form-check-label" for="remember">Remember me</label>
       </div>
   
-      <div><button type="submit" class="btn btn-primary my-3"></button></div>
+      <div><button type="submit" class="btn btn-primary my-3">Sign In</button></div>
     </form>
   </div>
   `,
@@ -87,7 +87,7 @@ const Login = Vue.component("Login", {
       });
     },
   },
-});
+})
 
 
 export default Login;

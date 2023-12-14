@@ -26,8 +26,7 @@ app.security = Security(app, datastore)
 from musicapp.resources import api
 api.init_app(app)
 
-
-
+from musicapp import views
 
 
 

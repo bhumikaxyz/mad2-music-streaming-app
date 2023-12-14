@@ -1,15 +1,34 @@
-import { createApp } from 'vue'; 
+//import { createApp } from 'vue'; 
 
 import router from './routers.js';
+import Navbar from './components/navbar.js';
 
-new Vue({
-    el: '#app',
-    template: `<div>Hello from vue app.
-    <router-view/>
+// const app = createApp({
+   
+//     template: `<div>
+//     <Navbar></Navbar>
+//     <router-view> </router-view>
+//     </div>`
+
+// })
+
+// app.use(router);
+
+// app.mount('#app');
+
+const app = new Vue({
+    el: "#app",
+    template: `
+    <div>
+    <Navbar></Navbar>
+    <router-view> </router-view>
     </div>`,
-    router
-})
+    router,
+    data: {
+        message: "Hello World !!"
+    },
+    methods: {
 
-// app.use(router)
+    }
+});
 
-// app.mount('#app')

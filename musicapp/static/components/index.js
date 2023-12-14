@@ -7,7 +7,7 @@ const Index = Vue.component('Index', {
              <div class="d-flex align-items-center justify-content-center">
                 <img
                   class="mb-2 img-fluid"
-                  src="{{ url_for('static', filename = '/images/musical-note.png') }}"
+                  src="static/images/musical-note.png"
                   alt="Logo"
                   width="90"
                   height="90"
@@ -18,12 +18,11 @@ const Index = Vue.component('Index', {
           </div>
     
           <hr class="my-3 p-1" />
-          <p class="lead">Join today to start listening to your favourite music.<button v-on:click="redirectToRegister" class="btn btn-outline-primary mx-2"
-            >Register</button>
-          ></p>
+          <p class="lead">Join today to start listening to your favourite music.<button v-on:click="redirectToRegister" class="btn btn-outline-primary mx-2">Register</button>
+          </p>
           <p class="lead">Already have an account? <button v-on:click="redirectToLogin" class="btn btn-outline-primary mx-2"
             >Sign In</button>
-          ></p>
+          </p>
         </div>
       </div>
     </div>
@@ -41,4 +40,4 @@ const Index = Vue.component('Index', {
 
 })
 
-export default Index
+export default Index;
