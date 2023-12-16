@@ -11,7 +11,7 @@ from flask_jwt_extended import JWTManager
 
 
 app = Flask(__name__)
-CORS(app)
+# CORS(app)
 app.config.from_object(Config)
 
 

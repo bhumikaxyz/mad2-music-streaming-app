@@ -119,7 +119,7 @@ class UserLogin(Resource):
     def post(self):
         args = login_parser.parse_args()
         username = args['username']
-        hashed_password = generate_password_hash(args['password'])
+        password =args['password']
 
         user = User.query.filter_by(username=username).first()
 
@@ -127,7 +127,7 @@ class UserLogin(Resource):
             if user.is_flagged:
                 return {'message': 'You are not allowed to use this platform'}, 404
             else:
-                check_password_hash(hashed_password, user.password_hash)
+                check_password_hash(user.password_hash, password)
                 if check_password_hash:
                     access_token = create_access_token(identity=user.id)
                     return jsonify({'status': 'success','message': 'Successfully logged in !!', 'access_token': access_token, "username": username})

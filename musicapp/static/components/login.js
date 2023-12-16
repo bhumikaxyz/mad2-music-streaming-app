@@ -54,7 +54,7 @@ const Login = Vue.component("Login", {
         <label class="form-check-label" for="remember">Remember me</label>
       </div>
   
-      <div><button type="submit" class="btn btn-primary my-3">Sign In</button></div>
+      <div><button v-on:click="login()" type="submit" class="btn btn-primary my-3">Sign In</button></div>
     </form>
   </div>
   `,
@@ -69,25 +69,35 @@ const Login = Vue.component("Login", {
   },
   methods: {
     login() {
-      fetch("/login?include_auth_token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(this.credentials),
-      }).then((response) => {
-        if (response.ok) {
-          return response.json();
-        } else {
-          throw new Error("Invalid username or password");
-        }
-      }).then((data) => {
-        localStorage.setItem('auth-token', data.response.user.authentication_token)
-        window.location.href='/';
-      });
-    },
-  },
-})
+      console.log(this.credentials)
+        // try {
+        //   const response = await fetch('http://127.0.0.1:5000//api//login', {
+        //     method: 'POST',
+        //     headers: {
+        //       'Content-Type': 'application/json',
+        //     },
+        //     body: JSON.stringify({
+        //       username: this.username,
+        //       password: this.password,
+        //     }),
+        //   });
+  
+        //   if (!response.ok) {
+        //     const errorData = await response.json();
+        //     throw new Error(errorData.message);
+        //   }
+  
+        //   const { access_token, username } = await response.json();s
+        //   localStorage.setItem('access_token', access_token);
+  
+        //   this.$router.push('/home');
+        // } catch (error) {
 
+        //   console.error('Login failed:', error.message);
+        //   this.$notify.error('Login failed. Please check your credentials.');
+        // }
+      },
+    }
+  })
 
 export default Login;
