@@ -137,7 +137,7 @@ class UserLogin(Resource):
             return {'message': 'Incorrect username or password.'}, 404    
        
 
-api.add_resource(UserLogin, '/login')
+api.add_resource(UserLogin, '/signin')
 
 #============================================== USER =====================================================
 

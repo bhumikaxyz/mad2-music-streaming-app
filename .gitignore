@@ -4,6 +4,7 @@ myenv/
 __pycache__/
 
 
+
 .pytest_cache/
 .coverage
 htmlcov/
@@ -11,3 +12,4 @@ htmlcov/
 dist/
 build/
 *.egg-info/
+env

@@ -54,7 +54,7 @@ const Login = Vue.component("Login", {
         <label class="form-check-label" for="remember">Remember me</label>
       </div>
   
-      <div><button v-on:click="login()" type="submit" class="btn btn-primary my-3">Sign In</button></div>
+      <div><button class="btn btn-primary mt-2" @click='login' > Login </button></div>
     </form>
   </div>
   `,
@@ -68,10 +68,12 @@ const Login = Vue.component("Login", {
     };
   },
   methods: {
-    login() {
+    async login() {
+      console.log("gokul")
       console.log(this.credentials)
+      console.log("sdasd")
         // try {
-        //   const response = await fetch('http://127.0.0.1:5000//api//login', {
+        //   const response = await fetch('http://127.0.0.1:5000/api/signin', {
         //     method: 'POST',
         //     headers: {
         //       'Content-Type': 'application/json',
