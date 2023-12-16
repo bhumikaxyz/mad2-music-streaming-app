@@ -1,4 +1,6 @@
 from datetime import datetime
+
+# from flask_security.datastore import Role
 from musicapp import db
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.sql import func 
@@ -20,11 +22,13 @@ playlist_song = db.Table('playlist_song',
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key = True, autoincrement=True)
     name = db.Column(db.String(100), nullable = False)
+    email = db.Column(db.String(100), unique = True)
     username = db.Column(db.String(20), unique = True, nullable = False)
     password_hash = db.Column(db.String(50), nullable = False)
     is_creator = db.Column(db.Boolean, default = False)
     is_flagged = db.Column(db.Boolean, default = False)
     fs_uniquifier = db.Column(db.String, unique=True, nullable=False)
+    active = db.Column(db.Boolean)
 
     song = db.relationship('Song', backref='creator', lazy=True)
     playlists = db.relationship('Playlist', backref = 'user', lazy = True)
@@ -35,12 +39,20 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return f'User {self.username}'
     
+    def has_role(self, role_name):
+        return bool(
+            Role.query
+            .join(Role.users)
+            .filter(User.id == self.id)
+            .filter(Role.name == role_name)
+            .count() == 1
+        )
 
 class Role(db.Model, RoleMixin):
-    id = db.Column(db.Integer, primary_key = True)
-    username = db.Column(db.String(20), unique = True, nullable = False)
-    description = db.Column(db.String)
-
+    __tablename__="role"
+    id = db.Column(db.Integer(), primary_key=True)
+    name = db.Column(db.String(80), unique=True)
+    description = db.Column(db.String(255))
 
 class Song(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -108,3 +120,4 @@ class Interactions(db.Model):
     def __repr__(self):
         return f'Liked {self.liked}, Rating {self.rating}'
     
+

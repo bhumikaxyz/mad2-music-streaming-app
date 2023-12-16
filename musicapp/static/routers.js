@@ -13,11 +13,13 @@ const routes = [
         },
         {
             path: '/login',
-            component: Login
+            component: Login,
+            name: "Login"
         },
         {
             path: '/register',
-            component: Register
+            component: Register,
+            name: "Register"
         },
         {
             path: '/home',
@@ -29,14 +31,10 @@ const routes = [
 
 
 
-// const router = createRouter({
-//     history: createWebHistory(),
-//     routes
-// });
-
-
 const router = new VueRouter({
+    // history: createWebHistory(),
     routes
 });
+
 
 export default router;

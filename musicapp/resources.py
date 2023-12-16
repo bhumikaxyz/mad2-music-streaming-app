@@ -1,5 +1,7 @@
 import os
-from flask import request, jsonify
+import secrets
+from functools import wraps
+from flask import request, jsonify, make_response
 from musicapp import app
 from flask_restful import Api, Resource, reqparse, marshal_with, fields, marshal
 from musicapp.models import *
@@ -7,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_login import current_user
 from mutagen.mp3 import MP3
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, get_current_user, verify_jwt_in_request
 
 
 def get_audio_duration(file_path):
@@ -24,6 +27,8 @@ def get_audio_duration(file_path):
 api = Api()
 api.prefix = '/api'    
 
+from musicapp import jwt
+
 #----------------------------------------- Output Fields ---------------------------------------------------
 
 user_fields = {
@@ -32,7 +37,9 @@ user_fields = {
     'username': fields.String,
     'password_hash': fields.String,
     'is_creator': fields.Boolean,
-    'is_flagged': fields.Boolean
+    'is_flagged': fields.Boolean,
+    'fs_uniquifier': fields.String,
+    'active': fields.Boolean
 }
 
 song_fields = {
@@ -49,6 +56,27 @@ song_fields = {
 
 }
 
+# =======================================================================
+# @jwt.user_lookup_loader()
+def auth_role(role):
+    def wrapper(fn):
+        @wraps(fn)
+        def decorator(*args, **kwargs):
+            verify_jwt_in_request()
+            current_user_id = get_jwt_identity()
+            current_user = User.query.get(current_user_id)
+            roles = role if isinstance(role, list) else [role]
+            print(current_user)
+            for r in roles:
+                print(current_user.roles)
+                print(current_user.has_role(r), r)
+            if all(not current_user.has_role(r) for r in roles):
+                return make_response({"message": f"Missing any of roles {','.join(roles)}"}, 403)
+            return fn(*args, **kwargs)
+        return decorator
+    return wrapper
+
+    
 #======================================= Registration and Login =========================================
 
 register_parser = reqparse.RequestParser()
@@ -73,6 +101,7 @@ class UserRegistration(Resource):
         else:
             hashed_password = generate_password_hash(args['password'])
             user = User(name=args['name'], username=args['username'], password_hash=hashed_password)
+            user.fs_uniquifier = secrets.token_hex(16)
             db.session.add(user)
             db.session.commit()
             return user, 201
@@ -89,20 +118,24 @@ login_parser.add_argument('password', type=str, required=True, help='Please prov
 class UserLogin(Resource):
     def post(self):
         args = login_parser.parse_args()
+        username = args['username']
         hashed_password = generate_password_hash(args['password'])
-        user = User.query.filter_by(username=args['username']).first()
+
+        user = User.query.filter_by(username=username).first()
+
         if user:
             if user.is_flagged:
                 return {'message': 'You are not allowed to use this platform'}, 404
             else:
-                check_password_hash(hashed_password, args['password'])
+                check_password_hash(hashed_password, user.password_hash)
                 if check_password_hash:
-                    return {'message': 'Login successful.'}, 201
+                    access_token = create_access_token(identity=user.id)
+                    return jsonify({'status': 'success','message': 'Successfully logged in !!', 'access_token': access_token, "username": username})
                 else:
                     return {'message': 'Incorrect username or password.'}, 404
         else:
             return {'message': 'Incorrect username or password.'}, 404    
-
+       
 
 api.add_resource(UserLogin, '/login')
 
@@ -206,7 +239,10 @@ api.add_resource(FlagCreator, '/flag_creator/<int:user_id>')
 
 
 # ================================================= SONGS ===================================================
+
 class SongListResource(Resource):
+    @auth_role(["creator", "admin"])
+    @jwt_required()
     def get(self):
         songs = Song.query.filter_by(is_flagged=False).order_by(Song.timestamp.desc()).all()
         songs_list = []

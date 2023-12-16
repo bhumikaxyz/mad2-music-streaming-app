@@ -7,6 +7,7 @@ from .config import Config
 from sqlalchemy.sql import func 
 from flask_cors import CORS
 from flask_security import Security
+from flask_jwt_extended import JWTManager
 
 
 app = Flask(__name__)
@@ -17,14 +18,18 @@ app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
-from .sec import datastore
-app.security = Security(app, datastore)
+# from .sec import datastore
+# app.security = Security(app, datastore)
 
 
 # from musicapp.models import User, Song, Album, Artist, Playlist, Interactions
 
+jwt = JWTManager(app)
+
 from musicapp.resources import api
 api.init_app(app)
+
+
 
 from musicapp import views
 
