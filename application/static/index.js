@@ -1,6 +1,7 @@
 
-import router from './routers.js';
-import Navbar from './components/navbar.js';
+import router from './router.js';
+// import Navbar from './components/Navbar.js';
+import NewNavbar from './components/NewNavbar.js';
 
 // Navigation gaurd
 // PROBLEM HERE!!! isAuthenticated not getting updated 
@@ -17,7 +18,7 @@ const app = new Vue({
     el: "#app",
     template: `
         <div>
-        <Navbar></Navbar>
+        <NewNavbar></NewNavbar>
         <router-view></router-view>
         </div>`,
     router

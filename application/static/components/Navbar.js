@@ -1,4 +1,4 @@
-const Navbar = Vue.component('Navbar', {
+export default {
     template: `<nav class="navbar fixed-top navbar-expand-lg bg-primary-subtle">
     <div class="container-fluid">
       <router-link to ="/" class="navbar-brand mb-0 mx-5 h1 display-6 fw-bold">
@@ -39,12 +39,36 @@ const Navbar = Vue.component('Navbar', {
 
           <router-link class="nav-link active" to="">Profile</router-link>
 
-          <router-link class="nav-link active" to="">Logout</router-link>
+          <a class="nav-link active" @click='logout'>Logout</a>
         </div>
       </div>
     </div>
-  </nav>`
-})
+  </nav>`,
+  methods: {
+    async logout() {
+      try {
+        const token = localStorage.getItem('access-token');
 
+        const res = await fetch('http://127.0.0.1:5000/api/signout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
 
-export default Navbar;
+        if (res.ok) {
+          console.log('User logged out successfully');
+          // Clear the access token from local storage
+          localStorage.removeItem('access-token');
+          this.$router.push({ path: '/' });
+        } else {
+          const data = await res.json();
+          console.error('Logout failed', data.message);
+        }
+      } catch (error) {
+        console.error('Error during logout', error);
+      }
+    },
+  }
+}

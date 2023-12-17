@@ -3,15 +3,15 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
-from .config import Config
+from config import Config
 from sqlalchemy.sql import func 
 from flask_cors import CORS
 from flask_security import Security
 from flask_jwt_extended import JWTManager
 
 
-app = Flask(__name__)
-# CORS(app)
+app = Flask(__name__, template_folder='templates')
+CORS(app)
 app.config.from_object(Config)
 
 
@@ -22,16 +22,16 @@ migrate = Migrate(app, db)
 # app.security = Security(app, datastore)
 
 
-# from musicapp.models import User, Song, Album, Artist, Playlist, Interactions
+# from application.models import User, Song, Album, Artist, Playlist, Interactions
 
 jwt = JWTManager(app)
 
-from musicapp.resources import api
+from application.resources import api
 api.init_app(app)
 
 
 
-from musicapp import views
+from application import views
 
 
 

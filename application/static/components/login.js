@@ -51,10 +51,10 @@ const Login = Vue.component("Login", {
           class="form-check-input"
           v-model="credentials.remember_token"
         />
-        <label class="form-check-label" for="remember">Remember me</label>
+        // <label class="form-check-label" for="remember">Remember me</label>
       </div>
   
-      <div><button class="btn btn-primary mt-2" @click='login' > Login </button></div>
+      <div><button class="btn btn-primary mt-3" @click='login' > Login </button></div>
     </form>
   </div>
   `,
@@ -65,6 +65,7 @@ const Login = Vue.component("Login", {
         password: null,
         remember_token: null,
       },
+      
     };
   },
   methods: {

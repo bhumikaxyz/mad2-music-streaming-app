@@ -1,4 +1,5 @@
 const Register = Vue.component('Register', {
+  
     template: `
     <div
       class="container-sm d-flex justify-content-center align-items-center"

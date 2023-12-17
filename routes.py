@@ -1,9 +1,9 @@
 import os
-from musicapp import app, db
+from application import app, db
 from flask import render_template, url_for, flash, redirect, request, abort
 from sqlalchemy import func
-from musicapp.forms import RegistrationForm, LoginForm, AdminLoginForm, UpdateProfileForm, SongForm, PlaylistForm, AlbumForm, RateSongForm, FilterForm
-from musicapp.models import User, Song, Playlist, Album, Artist, Interactions, playlist_song
+from application.forms import RegistrationForm, LoginForm, AdminLoginForm, UpdateProfileForm, SongForm, PlaylistForm, AlbumForm, RateSongForm, FilterForm
+from application.models import User, Song, Playlist, Album, Artist, Interactions, playlist_song
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, current_user, login_required
 from mutagen.mp3 import MP3
@@ -412,7 +412,7 @@ def play_song(song_id):
         lyrics = song.lyrics
     else:    
         try:
-            filepath = f"D:\Study Resources\IITM OD\mad1_project\musicapp\static\lyrics\{song.title}.txt"
+            filepath = f"D:\Study Resources\IITM OD\mad1_project\application\static\lyrics\{song.title}.txt"
             with open(filepath, 'r') as file:
                 lyrics = file.read()
         except:

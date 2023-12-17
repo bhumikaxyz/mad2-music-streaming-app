@@ -2,7 +2,7 @@ class Config(object):
     SECRET_KEY = 'e861bbc266c45fa9c9523ab8e9828209'
     SQLALCHEMY_DATABASE_URI = 'sqlite:///project.sqlite3'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    UPLOAD_FOLDER = 'musicapp/static/audios'
+    UPLOAD_FOLDER = 'application/static/audios'
     WTF_CSRF_ENABLED = False
     SECURITY_TOKEN_AUTHENTICATION_HEADER = 'Authentication-Token'
     SECURITY_PASSWORD_SALT = '31352480363346786718930794834546224821'

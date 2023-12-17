@@ -1,7 +1,7 @@
 from datetime import datetime
 
 # from flask_security.datastore import Role
-from musicapp import db
+from application import db
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.sql import func 
 

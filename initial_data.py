@@ -1,5 +1,5 @@
-from musicapp import db, app
-from musicapp.models import *
+from application import db, app
+from application.models import *
 
 with app.app_context():
     role_1 = Role(name='admin', description='Admin')

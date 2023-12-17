@@ -1,4 +1,4 @@
-const Index = Vue.component('Index', {
+const LandingPage = Vue.component('LandingPage', {
     template: `
     <div class="container-md text-center align-items-center justify-content">
       <div class="row align-items-center justify-content" style="height: 75vh; margin-top: 17vh;">
@@ -40,4 +40,4 @@ const Index = Vue.component('Index', {
 
 })
 
-export default Index;
+export default LandingPage;

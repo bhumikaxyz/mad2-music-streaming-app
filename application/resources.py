@@ -2,9 +2,9 @@ import os
 import secrets
 from functools import wraps
 from flask import request, jsonify, make_response
-from musicapp import app
+from application import app
 from flask_restful import Api, Resource, reqparse, marshal_with, fields, marshal
-from musicapp.models import *
+from application.models import *
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_login import current_user
@@ -27,7 +27,7 @@ def get_audio_duration(file_path):
 api = Api()
 api.prefix = '/api'    
 
-from musicapp import jwt
+from application import jwt
 
 #----------------------------------------- Output Fields ---------------------------------------------------
 
@@ -87,7 +87,6 @@ register_parser.add_argument('confirm_password', type=str, required=True, help='
 
 
 class UserRegistration(Resource):
-    @marshal_with(user_fields)
     def post(self):
         args = register_parser.parse_args()
 
@@ -104,7 +103,7 @@ class UserRegistration(Resource):
             user.fs_uniquifier = secrets.token_hex(16)
             db.session.add(user)
             db.session.commit()
-            return user, 201
+            return {'message': 'Successfully registered'}, 201
         
 
 api.add_resource(UserRegistration, '/register')
@@ -134,10 +133,20 @@ class UserLogin(Resource):
                 else:
                     return {'message': 'Incorrect username or password.'}, 404
         else:
-            return {'message': 'Incorrect username or password.'}, 404    
+            return {'message': 'Incorrect username or password.'}, 404   
        
 
 api.add_resource(UserLogin, '/signin')
+
+
+class UserLogout(Resource):
+    @jwt_required()
+    def post(self):
+        current_user = get_jwt_identity() 
+        return jsonify({'status': 'success', 'message': f'Successfully logged out user: {current_user}'})
+
+api.add_resource(UserLogout, '/signout')
+
 
 #============================================== USER =====================================================
 
