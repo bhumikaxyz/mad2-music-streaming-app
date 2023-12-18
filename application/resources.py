@@ -126,10 +126,10 @@ class UserLogin(Resource):
             if user.is_flagged:
                 return {'message': 'You are not allowed to use this platform'}, 404
             else:
-                check_password_hash(user.password_hash, password)
-                if check_password_hash:
+                
+                if check_password_hash(user.password_hash, password):
                     access_token = create_access_token(identity=user.id)
-                    return jsonify({'status': 'success','message': 'Successfully logged in !!', 'access_token': access_token, "username": username})
+                    return jsonify({'status': 'success','message': 'Successfully logged in.', 'access_token': access_token, "username": username})
                 else:
                     return {'message': 'Incorrect username or password.'}, 404
         else:
@@ -250,14 +250,11 @@ api.add_resource(FlagCreator, '/flag_creator/<int:user_id>')
 # ================================================= SONGS ===================================================
 
 class SongListResource(Resource):
-    @auth_role(["creator", "admin"])
-    @jwt_required()
     def get(self):
         songs = Song.query.filter_by(is_flagged=False).order_by(Song.timestamp.desc()).all()
         songs_list = []
         for song in songs:
             songs_list.append(marshal(song, song_fields))
-    
         return {'songs': songs_list}, 201    
     
 
@@ -265,8 +262,8 @@ class SongListResource(Resource):
     def post(self):
         title = request.form.get("title")
         lyrics = request.form.get("lyrics")
-        artist = request.form.get("artist")
-        artist = Artist.query.filter_by(name=artist).first()
+        a = request.form.get("artist")
+        artist = Artist.query.filter_by(name=a).first()
         song = Song(title=title, lyrics=lyrics, artist_id=artist.id)
        
         if 'file' not in request.files:

@@ -1,13 +1,11 @@
 // import {createRouter, createWebHistory} from 'vue-router';
 
 import LandingPage from './components/landing_page.js' 
-// import Login from './components/login.js'
-import Register from './components/register.js'
-import Home from './components/home.js'
-// import login_iitm from './components/login_iitm.js'
 import NewLogin from './components/NewLogin.js'
 import NewRegister from './components/NewRegister.js'
-// import Logout from './components/Logout.js'
+import NewHome from './components/NewHome.js'
+import UploadSong from './components/UploadSong.js'
+
 
 const routes = [
         {
@@ -26,10 +24,16 @@ const routes = [
             name: "NewRegister"
         },
         {
-            path: '/home',
-            component: Home,
-            name: "Home"
+            path: '/userhome',
+            component: NewHome,
+            name: "NewHome"
+        },
+        {
+            path: '/uploadsong',
+            component: UploadSong,
+            name: "Upload Song"
         }
+
 
     ];
 

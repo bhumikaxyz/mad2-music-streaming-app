@@ -29,7 +29,7 @@ const NewNavbar = Vue.component('NewNavbar', {
       >
         <div class="ms-auto d-flex mx-5">
 
-          <router-link class="nav-link active" to="/home">Home</router-link>
+          <router-link class="nav-link active" to="/userhome">Home</router-link>
 
           <router-link class="nav-link active" to="">Dashboard</router-link>
 

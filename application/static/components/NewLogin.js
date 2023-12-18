@@ -71,7 +71,7 @@ export default {
         localStorage.setItem('access-token', data.access_token)
         console.log("token saved")
         // localStorage.setItem('role', data.role)
-        this.$router.push({ path: '/home' })
+        this.$router.push({ path: '/userhome' })
       } else {
         this.error = data.message
       }
