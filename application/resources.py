@@ -624,8 +624,7 @@ album_parser = reqparse.RequestParser()
 album_parser.add_argument('name', type=str, required=True, help='Please provide a value')
 album_parser.add_argument('genre', type=str, choices=('Pop', 'Metal', 'Classical', 'Other'), default='Other')
 album_parser.add_argument('artist', type=str, required=True, help='Please provide a value')
-album_parser.add_argument('songs', type=int, action='append', help='Please provide a value')
-
+album_parser.add_argument('songs', type=list, required=True, help='Please provide a value')
 
 class AlbumListResource(Resource):
     def get(self):
@@ -658,18 +657,11 @@ class AlbumListResource(Resource):
             creator_id=current_user_id
         )
 
-        db.session.add(album)
-        db.session.commit()
-        album_id = album.id
-        
-
         song_ids = args['songs']
-        
-        print(song_ids,"bhumikaaaa")
-        songs = Song.query.filter(Song.id.in_(song_ids)).all()
-        print(songs)
-        album.songs.extend(songs)
+        songs = Song.query.filter(Song.id.in_(song_ids), Song.creator_id == current_user_id).all()
+        album.songs = songs
 
+        db.session.add(album)
         db.session.commit()
 
         return album, 201 
