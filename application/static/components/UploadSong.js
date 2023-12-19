@@ -30,7 +30,7 @@ export default {
 
         <div class="mb-3">
         <label for="lyrics" class="form-label">Lyrics</label>
-        <textarea v-model='formData.lyrics' id="lyrics" name="lyrics" class="form-control" required></textarea>
+        <textarea v' id="lyrics" name="lyrics" class="form-control"></textarea>
         </div>
     
         <div>

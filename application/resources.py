@@ -56,8 +56,29 @@ song_fields = {
 
 }
 
+artist_fields = {
+    'id': fields.Integer,
+    'name': fields.String
+}
+playlist_fields = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'songs': fields.List(fields.Nested({
+        'id': fields.Integer,
+        'title': fields.String,
+    }))
+}
+
+album_fields = {
+    'id': fields.Integer,
+    'name': fields.String,
+    'genre': fields.String,
+    'artist': fields.Nested(artist_fields),
+    'songs': fields.List(fields.Nested(song_fields)),
+}
+
 # =======================================================================
-# @jwt.user_lookup_loader()
+
 def auth_role(role):
     def wrapper(fn):
         @wraps(fn)
@@ -199,7 +220,39 @@ class UpdateProfile(Resource):
 
 api.add_resource(UpdateProfile, '/update_profile/<int:user_id>')
 
+#============================================= CREATOR =====================================================
 
+class CreatorResource(Resource):
+    def get(self):
+        creators = User.query.filter_by(is_creator=True).all()
+        return marshal(creators, user_fields), 201
+
+api.add_resource(CreatorResource, '/all_creators')
+
+
+class CreatorStatistics(Resource):
+    @jwt_required()
+    def get(post):
+        current_user_id = get_jwt_identity()
+        albums = Album.query.filter_by(creator_id=current_user_id).order_by(Album.timestamp.desc()).all()
+        n_songs = Song.query.filter(Song.creator_id==current_user_id).count()
+        n_albums = Album.query.filter(Album.creator_id==current_user_id).count()
+        avg_rating = (
+        db.session.query(func.avg(Interactions.rating))
+        .join(Song)
+        .filter(Song.creator_id == current_user_id)
+        .scalar()
+        )
+        if avg_rating:
+            avg_rating = round(avg_rating, 1)
+        else:
+            avg_rating=0  
+
+        stats = {'song_count': n_songs, 'album_count': n_albums, 'average_rating': avg_rating}
+
+        return stats, 200    
+    
+api.add_resource(CreatorStatistics, '/creator_statistics')    
 # ========================================== ADMIN ====================================================
 
 class AdminLogin(Resource):
@@ -211,6 +264,40 @@ class AdminLogin(Resource):
             return {'message': 'Incorrect username or password.'}, 404
         
 api.add_resource(AdminLogin, '/admin_login')      
+
+
+class AdminStatistics(Resource):
+    def get(self):
+        songs = Song.query.all()
+        creators = User.query.filter_by(is_creator=True).all()
+
+        n_users = User.query.filter(User.is_creator==False).count()
+        n_creators = User.query.filter(User.is_creator==True).count()
+        n_songs = Song.query.count()
+        n_albums = Album.query.count()
+        n_artists = Artist.query.count()
+        avg_rating = db.session.query(func.avg(Interactions.rating)).scalar()
+        avg_rating = round(avg_rating, 1)
+
+        stats = {'user_count': n_users, 'creator_count': n_creators, 'song_count': n_songs,
+                 'album_count': n_albums, 'artist_count': n_artists, 'average_rating': avg_rating}
+        
+        return stats, 200
+
+api.add_resource(AdminStatistics, '/admin_statistics')
+
+
+class AdminSongs(Resource):
+    def get(self):
+            songs = Song.query.order_by(Song.timestamp.desc()).all()
+            songs_list = []
+            for song in songs:
+                artist = Artist.query.get(song.artist_id)
+                song_data = {"id": song.id, "title": song.title, "filename": song.filename, "duration": song.duration,"lyrics": song.lyrics, "artist": artist.name, "album_id": song.album_id, "artist_id": song.artist_id, "creator_id": song.creator_id, "is_flagged": song.is_flagged}
+                songs_list.append(song_data)
+            return {'songs': songs_list}, 201
+
+api.add_resource(AdminSongs, '/admin_songs')    
 
 
 flag_parser = reqparse.RequestParser()
@@ -247,14 +334,16 @@ class FlagCreator(Resource):
 api.add_resource(FlagCreator, '/flag_creator/<int:user_id>')
 
 
-# ================================================= SONGS ===================================================
+# ================================================= SONGS ==============================================
 
 class SongListResource(Resource):
     def get(self):
         songs = Song.query.filter_by(is_flagged=False).order_by(Song.timestamp.desc()).all()
         songs_list = []
         for song in songs:
-            songs_list.append(marshal(song, song_fields))
+            artist = Artist.query.get(song.artist_id)
+            song_data = {"id": song.id, "title": song.title, "filename": song.filename, "duration": song.duration,"lyrics": song.lyrics, "artist": artist.name, "album_id": song.album_id, "artist_id": song.artist_id, "creator_id": song.creator_id, "is_flagged": song.is_flagged}
+            songs_list.append(song_data)
         return {'songs': songs_list}, 201    
     
 
@@ -263,7 +352,14 @@ class SongListResource(Resource):
         title = request.form.get("title")
         lyrics = request.form.get("lyrics")
         a = request.form.get("artist")
+
+        #Search for artist. If not found in db, create one.
         artist = Artist.query.filter_by(name=a).first()
+        if not artist:
+            artist = Artist(name=a)
+            db.session.add(artist)
+            db.session.commit()
+
         song = Song(title=title, lyrics=lyrics, artist_id=artist.id)
        
         if 'file' not in request.files:
@@ -296,7 +392,9 @@ class SongResource(Resource):
     def get(self, song_id):
         song = Song.query.get(song_id)
         if song:
-            return {'song': marshal(song, song_fields)}, 201
+            artist = Artist.query.get(song.artist_id)
+            song_data = {"id": song.id, "title": song.title, "filename": song.filename, "duration": song.duration,"lyrics": song.lyrics, "artist": artist.name, "album_id": song.album_id, "artist_id": song.artist_id, "creator_id": song.creator_id, "is_flagged": song.is_flagged}
+            return song_data, 201
         else:
             return {'message': 'Song not found'}, 404 
         
@@ -373,16 +471,18 @@ like_parser = reqparse.RequestParser()
 like_parser.add_argument('like', type=bool, default=False)
 
 class LikeSongResource(Resource):
+    @jwt_required()
     def post(self, song_id):
         args = like_parser.parse_args()
         song = Song.query.get(song_id)
-        # user = current_user
+        current_user_id = get_jwt_identity()
+        print(current_user_id)
         like = args['like']
-        existing_interaction = Interactions.query.filter_by(song_id=song.id).first()
+        existing_interaction = Interactions.query.filter_by(user_id=current_user_id, song_id=song.id).first()
         if existing_interaction:
             existing_interaction.liked = args['like']
         else:
-            new_interaction = Interactions(song_id=song.id, liked=like)
+            new_interaction = Interactions(user_id=current_user_id, song_id=song.id, liked=like)
             db.session.add(new_interaction)
 
         db.session.commit()
@@ -395,16 +495,17 @@ rating_parser = reqparse.RequestParser()
 rating_parser.add_argument('rating', type=float, choices=[1, 2, 3, 4, 5], default=0)
 
 class RateSongResource(Resource):
+    @jwt_required()
     def post(self, song_id):
         args = rating_parser.parse_args()
         song = Song.query.get(song_id)
-        # user = current_user
+        current_user_id = get_jwt_identity()
         rating = args['rating']
-        existing_interaction = Interactions.query.filter_by(song_id=song.id).first()
+        existing_interaction = Interactions.query.filter_by(user_id=current_user_id, song_id=song.id).first()
         if existing_interaction:
             existing_interaction.rating = rating
         else:
-            new_interaction = Interactions(song_id=song.id, rating=rating)
+            new_interaction = Interactions(user_id=current_user_id, song_id=song.id, rating=rating)
             db.session.add(new_interaction)
 
         db.session.commit()
@@ -415,9 +516,14 @@ api.add_resource(RateSongResource, '/rate/<int:song_id>')
 
 # =============================================== PLAYLISTS ================================================
 
+playlist_parser = reqparse.RequestParser()
+playlist_parser.add_argument('name', type=str, required=True, help='Please provide a value')
+
 class PlaylistListResource(Resource):
+    @jwt_required()
     def get(self):
-        playlists = Playlist.query.order_by(Playlist.timestamp.desc()).all()
+        current_user_id = get_jwt_identity()
+        playlists = Playlist.query.filter_by(user_id=current_user_id).order_by(Playlist.timestamp.desc()).all()
         playlists_list = []
         for playlist in playlists:
             playlist_data = {'id': playlist.id, 'name': playlist.name}
@@ -425,22 +531,70 @@ class PlaylistListResource(Resource):
 
         return {'playlists': playlists_list}, 201    
     
+    
+    @marshal_with(playlist_fields)
+    @jwt_required()
+    def post(self):
+        data = request.get_json()
+        playlist_name = data.get('name')
+        song_ids = data.get('songs', [])
+        current_user_id = get_jwt_identity()
+
+        #Create new playlist
+        new_playlist = Playlist(name=playlist_name, user_id=current_user_id)
+        db.session.add(new_playlist)
+        db.session.commit()
+
+        # Add songs to the playlist
+        songs = Song.query.filter(Song.id.in_(song_ids)).all()
+        new_playlist.songs.extend(songs)
+        db.session.commit()
+
+        return new_playlist, 201
 
 api.add_resource(PlaylistListResource, '/playlists')
 
-playlist_parser = reqparse.RequestParser()
-playlist_parser.add_argument('name', type=str, required=True, help='Please provide a value')
+
 
 
 class PlaylistResource(Resource):
+    @jwt_required()
     def get(self, playlist_id):
-        playlist = Playlist.query.get_or_404(playlist_id)
+        playlist = Playlist.query.get(playlist_id)
         if playlist:
-            song_list = [song for song in playlist.songs]
-            playlist_data = {'id': playlist.id, 'name': playlist.name, 'songs': song_list}
-            return {'playlist': playlist_data}, 201
+            return marshal(playlist, playlist_fields), 200
         else:
             return {'message': 'Playlist not found.'}, 404
+        
+    @marshal_with(playlist_fields)
+    @jwt_required()
+    def put(self, playlist_id):
+        data = request.get_json()
+        playlist_name = data.get('name')
+        song_ids = data.get('songs', [])
+        current_user_id = get_jwt_identity()
+
+
+        playlist = Playlist.query.filter_by(id=playlist_id, user_id=current_user_id).first()
+
+        if not playlist:
+            return {'error': 'Playlist not found or you do not have permission to update it'}, 404
+
+        # Update playlist information
+        if playlist_name:
+            playlist.name = playlist_name
+
+
+        # Update songs in the playlist
+        if song_ids:
+            print("imhreee")
+            print(song_ids)
+            songs = Song.query.filter(Song.id.in_(song_ids)).all()
+            playlist.songs = songs
+
+        db.session.commit()
+
+        return playlist, 200    
 
     def put(self, playlist_id):
         args = playlist_parser.parse_args()
@@ -465,7 +619,6 @@ class PlaylistResource(Resource):
 api.add_resource(PlaylistResource, '/playlist/<int:playlist_id>')
 
 
-
 #============================================= ALBUMS =====================================================
 
 class AlbumListResource(Resource):
@@ -478,6 +631,7 @@ class AlbumListResource(Resource):
             albums_list.append(album_data)
 
         return {'albums': albums_list}, 201    
+       
         
 
 api.add_resource(AlbumListResource, '/albums')    
@@ -489,14 +643,12 @@ album_parser.add_argument('artist', type=str, required=True, help='Please provid
 
 
 class AlbumResource(Resource):
+    @marshal_with(album_fields)
     def get(self, album_id):
-        print("hiii")
         album = Album.query.get(album_id)
-        print(album)
         if album:
             artist = Artist.query.get(album.artist_id)
-            album_data = {'id': album.id, 'name': album.name, 'genre': album.genre, 'artist': artist.name, 'songs': album.songs}
-            return {'album': album_data}, 201
+            return {'id': album.id, 'name': album.name, 'genre': album.genre, 'artist': artist, 'songs': album.songs}
         else:
             return {'message': 'Album not found.'}, 404
 

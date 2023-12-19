@@ -6,7 +6,6 @@ export default {
     
           <form method="get" action="" class="d-flex">
             <div class="form-group mb-0 me-2">
-              <label for="filter_type">Filter Type</label>
               <select id="filter_type" name="filter_type">
                 <option value="title">Title</option>
                 <option value="artist">Artist</option>
@@ -14,7 +13,6 @@ export default {
               </select>
             </div>
             <div class="form-group mb-0 me-2">
-              <label for="filter_value">Filter Value</label>
               <input type="text" id="filter_value" name="filter_value">
             </div>
             <div class="form-group mb-0 me-2">
@@ -34,19 +32,19 @@ export default {
 
 
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-3 mb-3">
-            <div v-for="song in songs" :key="song.id" class="col">
+            <div v-for="song in songs.songs" :key="song.id" class="col">
                 <div class="card shadow-sm bg-danger-subtle mb-3">
                 <img src="static/images/song.png" class="img-thumbnail rounded mb-0 shadow-sm mx-auto" alt="song" width="200 px" height="200 px"/>
-                <div class="card-body padding-top-0">
+                <div class="card-body px-2">
                 <p class="card-text">
                 <p class="mb-0">{{ song.title }}</p>
-                <p><small>{{ song.artist_id }}</small></p>
+                <p><small>{{ song.artist }}</small></p>
                 </p>
                 <div class="d-flex justify-content-between align-items-center">
-                    <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-secondary">Play</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary">Delete</button>
+                    <div class="btn-group margin-right-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" @click='buttonPlaySong(song.id)'>Play</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" @click='buttonEditSong(song.id)'>Edit</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"@click='buttonDeleteSong(song.id)'>Delete</button>
                      </div>
                     <small class="text-body-secondary">{{ song.duration }}</small>
                 </div>
@@ -58,13 +56,13 @@ export default {
         <hr class="mt-3">
         <h2 class="mb-3">All Albums</h2>
         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-3 mb-3">
-            <div v-for="album in albums" :key="album.id" class="col">
+            <div v-for="album in albums.albums" :key="album.id" class="col">
                 <div class="card shadow-sm bg-danger-subtle mb-3">
                 <img src="static/images/album.png" class="img-thumbnail rounded mb-0 shadow-sm mx-auto" alt="song" width="200 px" height="200 px"/>
                 <div class="card-body padding-top-0">
                 <p class="card-text">
                 <p class="mb-0">{{ album.name }}</p>
-                <p><small>{{ album.artist }}</small></p>
+                <p><small>{{ album.artist}}</small></p>
                 </p>
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="btn-group">
@@ -119,9 +117,39 @@ export default {
               console.error('Error fetching albums:', error);
             }
           },
+
         buttonAddSong(){
-            this.$router.push({ path: '/uploadsong' })
-        }
-    },
-    
+            this.$router.push({ path: '/upload-song' })
+        },
+
+        buttonPlaySong(song_id){
+            this.$router.push({ name: "Play Song", params: {id: song_id}})
+        },
+
+        buttonEditSong(song_id){
+            console.log(song_id)
+            this.$router.push({ name: "Update Song", params: {id: song_id}})
+        },
+
+        async buttonDeleteSong(song_id){
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/song/${song_id}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                });
+        
+                if (response.ok) {
+                  console.log('Song deleted successfully');
+                  this.songs = this.songs.filter(song => song.id !== song_id);
+                } else {
+                  const errorData = await response.json();
+                  console.error('Error deleting song:', errorData);
+                }
+              } catch (error) {
+                console.error('Error deleting song:', error);
+              }
+          },    
+    },   
 }

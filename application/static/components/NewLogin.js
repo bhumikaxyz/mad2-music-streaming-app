@@ -1,3 +1,4 @@
+
 export default {
     template: `<div
     class="container-sm d-flex justify-content-center align-items-center"
@@ -55,7 +56,19 @@ export default {
         error: null
     }
   },
-
+  computed: {
+    authenticated() {
+    // Check if the access token is present in local storage
+    // return !!localStorage.getItem('access-token');
+      token = localStorage.getItem('access-token');
+      if (token) {
+      return true;
+      }
+      else {
+        return false;
+      }
+    } 
+  },
   methods: {
     async login() {
       const res = await fetch('http://127.0.0.1:5000/api/signin', {
@@ -67,10 +80,11 @@ export default {
       })
       const data = await res.json()
       if (res.ok) {
-        console.log("OKAYYYY")
         localStorage.setItem('access-token', data.access_token)
         console.log("token saved")
         // localStorage.setItem('role', data.role)
+        // this.$store.commit('setAuthenticated', true);
+        console.log('Authenticated:', this.authenticated);
         this.$router.push({ path: '/userhome' })
       } else {
         this.error = data.message

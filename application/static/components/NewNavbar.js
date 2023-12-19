@@ -31,19 +31,35 @@ const NewNavbar = Vue.component('NewNavbar', {
 
           <router-link class="nav-link active" to="/userhome">Home</router-link>
 
-          <router-link class="nav-link active" to="">Dashboard</router-link>
+          <router-link class="nav-link active" to="/creator-dashboard">Dashboard</router-link>
 
-          <router-link class="nav-link active" to=""
+          <router-link class="nav-link active" to="/your-playlists"
             >Your Playlists</router-link
           >
 
           <router-link class="nav-link active" to="">Profile</router-link>
 
           <a class="nav-link active" @click='logout'>Logout</a>
+          <router-link class="nav-link active" to="/admin-dashboard">Admin Dashboard</router-link>
         </div>
       </div>
     </div>
   </nav>`,
+
+  computed: {
+    authenticated() {
+    // Check if the access token is present in local storage
+    token = localStorage.getItem('access-token');
+    if (token) {
+      return true;
+    }
+    else {
+      return false;
+    }
+
+    } 
+  },
+  
   methods: {
     async logout() {
       try {
@@ -59,7 +75,8 @@ const NewNavbar = Vue.component('NewNavbar', {
 
         if (res.ok) {
           console.log('User logged out successfully');
-          // Clear the access token from local storage
+          // this.$store.commit('setAuthenticated', false);
+          console.log('Authenticated:', this.authenticated);
           localStorage.removeItem('access-token');
           this.$router.push({ path: '/' });
         } else {
