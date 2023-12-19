@@ -368,14 +368,7 @@ def update_album(album_id):
         form.genre.data = album.genre
     
     if request.method == 'POST' and form.validate_on_submit():
-        # artist_name = form.artist.data
-        # artist = Artist.query.filter_by(name=artist_name).first()
-        # if not artist:
-        #     artist = Artist(name=form.artist.data)
-        #     db.session.add(artist)
-        #     db.session.commit()
-
-         # album.artist_id=artist.id
+        
         album.name = form.name.data
         album.genre = form.genre.data
         selected_songs = form.songs.data

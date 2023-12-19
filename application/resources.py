@@ -621,6 +621,12 @@ api.add_resource(PlaylistResource, '/playlist/<int:playlist_id>')
 
 #============================================= ALBUMS =====================================================
 
+album_parser = reqparse.RequestParser()
+album_parser.add_argument('name', type=str, required=True, help='Please provide a value')
+album_parser.add_argument('genre', type=str, choices=('Pop', 'Metal', 'Classical', 'Other'), default='Other')
+album_parser.add_argument('artist', type=str, required=True, help='Please provide a value')
+album_parser.add_argument('songs', type=list, required=True, help='Please provide a value')
+
 class AlbumListResource(Resource):
     def get(self):
         albums = Album.query.order_by(Album.timestamp.desc()).all()
@@ -630,16 +636,41 @@ class AlbumListResource(Resource):
             album_data = {'id': album.id, 'name': album.name, 'genre': album.genre, 'artist': artist.name}
             albums_list.append(album_data)
 
-        return {'albums': albums_list}, 201    
+        return {'albums': albums_list}, 201   
+
+    @jwt_required()
+    @marshal_with(album_fields)
+    def post(self):
+        current_user_id = get_jwt_identity()
+        args = album_parser.parse_args()
+        
+        artist_name = args['artist']
+        artist = Artist.query.filter_by(name=artist_name).first()
+        if not artist:
+            artist = Artist(name=artist_name)
+            db.session.add(artist)
+            db.session.commit()
+
+        album = Album(
+            name=args['name'],
+            genre=args['genre'],
+            artist_id=artist.id,
+            creator_id=current_user_id
+        )
+
+        song_ids = args['songs']
+        songs = Song.query.filter(Song.id.in_(song_ids), Song.creator_id == current_user_id).all()
+        album.songs = songs
+
+        db.session.add(album)
+        db.session.commit()
+
+        return album, 201 
        
         
 
 api.add_resource(AlbumListResource, '/albums')    
 
-album_parser = reqparse.RequestParser()
-album_parser.add_argument('name', type=str, required=True, help='Please provide a value')
-album_parser.add_argument('genre', type=str, choices=('Pop', 'Metal', 'Classical', 'Other'), default='Other')
-album_parser.add_argument('artist', type=str, required=True, help='Please provide a value')
 
 
 class AlbumResource(Resource):
