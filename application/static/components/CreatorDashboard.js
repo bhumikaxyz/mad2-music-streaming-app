@@ -52,9 +52,9 @@ export default {
                     <td>{{ index + 1 }}</td>
                     <td>{{ album.name }}</td>
                     <td>
-                        <router-link :to="{ name: 'view-album', params: { album_id: album.id }}" class="btn btn-outline-info btn-sm mx-3">View</router-link>
-                        <router-link :to="{ name: 'update-album', params: { album_id: album.id }}" class="btn btn-outline-primary btn-sm mx-3">Update</router-link>
-                        <button class="btn btn-outline-danger btn-sm mx-3">Delete</button>
+                        <router-link :to="{ name: 'View Album', params: { id: album.id }}" class="btn btn-outline-info btn-sm mx-3">View</router-link>
+                        <router-link :to="{ name: 'Update Album', params: { id: album.id }}" class="btn btn-outline-primary btn-sm mx-3">Update</router-link>
+                        <button @click="buttonDeleteAlbum(album.id)" class="btn btn-outline-danger btn-sm mx-3">Delete</button>
                     </td>
                     </tr>
                 </tbody>
@@ -112,5 +112,28 @@ methods: {
           console.error('Error fetching user albums', error);
         }
       },
+
+      async buttonDeleteAlbum(albumId) {
+        try {
+          const response = await fetch(`http://127.0.0.1:5000/api/album/${albumId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${localStorage.getItem('access-token')}`
+            },
+          });
+  
+          if (!response.ok) {
+            throw new Error('Network response was not ok');
+          }
+          const responseData = await response.json();
+          console.log(responseData);
+          this.getUserAlbums();
+          // this.albums = this.albums.filter(album => album.id !== albumId);
+        } catch (error) {
+          console.error('There was a problem with the fetch operation:', error);
+        }
+      },
+
+      }
     }    
-}

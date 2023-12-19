@@ -69,7 +69,7 @@ const NewNavbar = Vue.component('NewNavbar', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
           },
         });
 
@@ -78,6 +78,7 @@ const NewNavbar = Vue.component('NewNavbar', {
           // this.$store.commit('setAuthenticated', false);
           console.log('Authenticated:', this.authenticated);
           localStorage.removeItem('access-token');
+          console.log('token removed');
           this.$router.push({ path: '/' });
         } else {
           const data = await res.json();

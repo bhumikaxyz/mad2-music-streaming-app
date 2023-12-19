@@ -161,10 +161,9 @@ api.add_resource(UserLogin, '/signin')
 
 
 class UserLogout(Resource):
-    @jwt_required()
     def post(self):
-        current_user = get_jwt_identity() 
-        return jsonify({'status': 'success', 'message': f'Successfully logged out user: {current_user}'})
+        # current_user = get_jwt_identity() 
+        return jsonify({'status': 'success', 'message': 'Successfully logged out user'})
 
 api.add_resource(UserLogout, '/signout')
 
@@ -625,7 +624,8 @@ album_parser = reqparse.RequestParser()
 album_parser.add_argument('name', type=str, required=True, help='Please provide a value')
 album_parser.add_argument('genre', type=str, choices=('Pop', 'Metal', 'Classical', 'Other'), default='Other')
 album_parser.add_argument('artist', type=str, required=True, help='Please provide a value')
-album_parser.add_argument('songs', type=list, required=True, help='Please provide a value')
+album_parser.add_argument('songs', type=int, action='append', help='Please provide a value')
+
 
 class AlbumListResource(Resource):
     def get(self):
@@ -643,7 +643,7 @@ class AlbumListResource(Resource):
     def post(self):
         current_user_id = get_jwt_identity()
         args = album_parser.parse_args()
-        
+
         artist_name = args['artist']
         artist = Artist.query.filter_by(name=artist_name).first()
         if not artist:
@@ -658,11 +658,18 @@ class AlbumListResource(Resource):
             creator_id=current_user_id
         )
 
-        song_ids = args['songs']
-        songs = Song.query.filter(Song.id.in_(song_ids), Song.creator_id == current_user_id).all()
-        album.songs = songs
-
         db.session.add(album)
+        db.session.commit()
+        album_id = album.id
+        
+
+        song_ids = args['songs']
+        
+        print(song_ids,"bhumikaaaa")
+        songs = Song.query.filter(Song.id.in_(song_ids)).all()
+        print(songs)
+        album.songs.extend(songs)
+
         db.session.commit()
 
         return album, 201 
@@ -683,20 +690,48 @@ class AlbumResource(Resource):
         else:
             return {'message': 'Album not found.'}, 404
 
+    # def put(self, album_id):
+    #     args = album_parser.parse_args()
+    #     album = Album.query.get_or_404(album_id)
+    #     if album:
+    #         album.name = args['name']
+    #         album.genre = args['genre']
+    #         artist = Artist.query.filter_by(name=args['artist']).first()
+    #         album.artist_id = artist.id
+    #         db.session.commit()
+    #         return {'message': 'Album updated successfully'}, 201
+    #     else:
+    #         return {'message': 'Album not found'}, 404
+
+    @marshal_with(album_fields)
     def put(self, album_id):
+        album = Album.query.get(album_id)
+        if not album:
+            return {'message': 'Album not found.'}, 404
+
         args = album_parser.parse_args()
-        album = Album.query.get_or_404(album_id)
-        if album:
+
+        if args['name']:
             album.name = args['name']
+        if args['genre']:
             album.genre = args['genre']
-            artist = Artist.query.filter_by(name=args['artist']).first()
+        if args['artist']:
+            artist_name = args['artist']
+            artist = Artist.query.filter_by(name=artist_name).first()
+            if not artist:
+                artist = Artist(name=artist_name)
+                db.session.add(artist)
+                db.session.commit()
             album.artist_id = artist.id
-            db.session.commit()
-            return {'message': 'Album updated successfully'}, 201
-        else:
-            return {'message': 'Album not found'}, 404
+        if args['songs']:
+            song_ids = args['songs']
+            songs = Song.query.filter(Song.id.in_(song_ids)).all()
+            album.songs = songs
 
+        db.session.commit()
 
+        return album, 200
+    
 
     def delete(self, album_id):
         album = Album.query.get(album_id)
