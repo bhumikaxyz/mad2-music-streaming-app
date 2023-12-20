@@ -102,6 +102,7 @@ def auth_role(role):
 
 register_parser = reqparse.RequestParser()
 register_parser.add_argument('name', type=str, required=True, help='Please provide a value')
+register_parser.add_argument('email', type=str, required=True, help='Please provide a value')
 register_parser.add_argument('username', type=str, required=True, help='Please provide a value')
 register_parser.add_argument('password', type=str, required=True, help='Please provide a value')
 register_parser.add_argument('confirm_password', type=str, required=True, help='Please provide a value')
@@ -135,7 +136,7 @@ class UserRegistration(Resource):
 
 
             hashed_password = generate_password_hash(args['password'])
-            user = User(name=args['name'], username=args['username'], password_hash=hashed_password)
+            user = User(name=args['name'], username=args['username'], password_hash=hashed_password, email=args['email'])
             user.fs_uniquifier = secrets.token_hex(16)
             user.roles.append(user_role)  # Assign the role to the user
 
@@ -303,15 +304,15 @@ class CreatorStatistics(Resource):
 api.add_resource(CreatorStatistics, '/creator_statistics')    
 # ========================================== ADMIN ====================================================
 
-class AdminLogin(Resource):
-    def post(self):
-        args = login_parser.parse_args()
-        if args['username']=='admin' and  args['password']=='admin':
-            return {'message': 'You are now logged in as admin.'}, 201
-        else:
-            return {'message': 'Incorrect username or password.'}, 404
+# class AdminLogin(Resource):
+#     def post(self):
+#         args = login_parser.parse_args()
+#         if args['username']=='admin' and  args['password']=='admin':
+#             return {'message': 'You are now logged in as admin.'}, 201
+#         else:
+#             return {'message': 'Incorrect username or password.'}, 404
         
-api.add_resource(AdminLogin, '/admin_login')      
+# api.add_resource(AdminLogin, '/admin_login')      
 
 
 class AdminStatistics(Resource):

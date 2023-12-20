@@ -39,8 +39,6 @@ const NewNavbar = Vue.component('NewNavbar', {
             >Your Playlists</router-link
           >
 
-          <router-link v-if="isAuthenticated && (isUser || isCreator)" class="nav-link active" to="">Profile</router-link>
-        
           <router-link v-if="isAuthenticated && isAdmin" class="nav-link active" to="/admin-dashboard">Admin Dashboard</router-link>
 
           <button v-if="isAuthenticated" class="nav-link active" @click='logout'>Logout</button>

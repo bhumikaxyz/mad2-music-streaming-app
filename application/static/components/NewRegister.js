@@ -21,6 +21,11 @@ export default {
         <label for="name" class="form-label">Name</label>
         <input type="text" id="name" name="name" class="form-control" required v-model="name" />
       </div>
+
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="text" id="email" name="email" class="form-control" required v-model="email" />
+      </div>
   
       <div class="mb-3">
         <label for="username" class="form-label">Username</label>
@@ -70,6 +75,7 @@ export default {
   data() {
     return {
       name: null,
+      email: null,
       username: null,
       password: null,
       confirm_password: null,
@@ -91,6 +97,7 @@ export default {
           },
           body: JSON.stringify({
             name: this.name,
+            email: this.email,
             username: this.username,
             password: this.password,
             confirm_password: this.confirm_password,
