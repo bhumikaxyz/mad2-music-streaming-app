@@ -4,16 +4,16 @@ export default {
         <h2>All Tracks</h2>
           <div class="container d-flex justify-content-between align-items-center mb-3">
     
-          <form method="get" action="" class="d-flex">
+          <form @submit.prevent="submitSearchForm" class="d-flex">
             <div class="form-group mb-0 me-2">
-              <select id="filter_type" name="filter_type">
+              <select v-model="filterType" id="filter_type" name="filter_type">
                 <option value="title">Title</option>
                 <option value="artist">Artist</option>
                 <option value="rating">Rating</option>
               </select>
             </div>
             <div class="form-group mb-0 me-2">
-              <input type="text" id="filter_value" name="filter_value">
+              <input v-model="filterValue" type="text" id="filter_value" name="filter_value">
             </div>
             <div class="form-group mb-0 me-2">
               <div><button type="submit" class="btn btn-outline-primary btn-sm">Submit</button></div>
@@ -81,6 +81,8 @@ export default {
         return {
             songs: [],
             albums: [],
+            filterType: 'title', // Default filter type
+            filterValue: '',
             isAdmin: false,
             isCreator: false,
             isUser: false
@@ -94,7 +96,7 @@ export default {
     methods: {
       async getUserRole() {
         try {
-          const response = await fetch('http://127.0.0.1:5000/api/user_role', {
+          const response = await fetch('/api/user_role', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -179,6 +181,31 @@ export default {
               } catch (error) {
                 console.error('Error deleting song:', error);
               }
-          },    
+          }, 
+          async submitSearchForm() {
+            try {
+              const url = `/api/songs/filter?filter_type=${this.filterType}&filter_value=${this.filterValue}`;
+              const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
+                },
+                
+              });
+      
+              if (response.ok) {
+                const responseData = await response.json();
+                console.log('Filtered songs:', responseData);
+                this.songs = responseData.songs;
+              } else {
+                const errorData = await response.json();
+                console.error('Error fetching filtered songs:', errorData);
+              }
+            } catch (error) {
+              console.error('Error fetching filtered songs:', error);
+            }
+          },
+           
     },   
 }

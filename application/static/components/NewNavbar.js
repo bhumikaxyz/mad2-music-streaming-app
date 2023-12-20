@@ -91,7 +91,7 @@ const NewNavbar = Vue.component('NewNavbar', {
   methods: {
     async getUserRole() {
       try {
-        const response = await fetch('http://127.0.0.1:5000/api/user_role', {
+        const response = await fetch('/api/user_role', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

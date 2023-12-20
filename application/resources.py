@@ -486,7 +486,6 @@ class FilteredSongs(Resource):
     def get(self):
         args = filter_parser.parse_args()
         query = Song.query.filter_by(is_flagged=False).order_by(Song.timestamp.desc())
-        # songs = Song.query.filter_by(is_flagged=False).order_by(Song.timestamp.desc()).all()
         filter_type = args['filter_type']
         filter_value = args['filter_value']
 
@@ -635,25 +634,17 @@ class PlaylistResource(Resource):
 
 
         # Update songs in the playlist
-        if song_ids:
+        if playlist and song_ids:
             print("imhreee")
             print(song_ids)
             songs = Song.query.filter(Song.id.in_(song_ids)).all()
-            playlist.songs = songs
+            playlist.songs.extend(songs)
+   
 
         db.session.commit()
 
         return playlist, 200    
 
-    def put(self, playlist_id):
-        args = playlist_parser.parse_args()
-        playlist = Playlist.query.get_or_404(playlist_id)
-        if playlist:
-            playlist.name = args['name']
-            db.session.commit()
-            return {'message': 'Playlist updated successfully'}, 201
-        else:
-            return {'message': 'Playlist not found'}, 404
 
     def delete(self, playlist_id):
         playlist = Playlist.query.get_or_404(playlist_id)
@@ -738,19 +729,7 @@ class AlbumResource(Resource):
             return {'id': album.id, 'name': album.name, 'genre': album.genre, 'artist': artist, 'songs': album.songs}
         else:
             return {'message': 'Album not found.'}, 404
-
-    # def put(self, album_id):
-    #     args = album_parser.parse_args()
-    #     album = Album.query.get_or_404(album_id)
-    #     if album:
-    #         album.name = args['name']
-    #         album.genre = args['genre']
-    #         artist = Artist.query.filter_by(name=args['artist']).first()
-    #         album.artist_id = artist.id
-    #         db.session.commit()
-    #         return {'message': 'Album updated successfully'}, 201
-    #     else:
-    #         return {'message': 'Album not found'}, 404
+        
 
     @marshal_with(album_fields)
     def put(self, album_id):
