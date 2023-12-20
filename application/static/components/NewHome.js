@@ -90,7 +90,7 @@ export default {
     methods: {
         async getSongs() {
             try {
-              const response = await fetch('http://127.0.0.1:5000/api/songs');
+              const response = await fetch('/api/songs');
               if (response.ok) {
                 this.songs = await response.json();
               } else {
@@ -104,7 +104,7 @@ export default {
       
           async getAlbums() {
             try {
-              const response = await fetch('http://127.0.0.1:5000/api/albums');
+              const response = await fetch('/api/albums');
               if (response.ok) {
                 this.albums = await response.json();
               } else {
@@ -131,7 +131,7 @@ export default {
 
         async buttonDeleteSong(song_id){
             try {
-                const response = await fetch(`http://127.0.0.1:5000/api/song/${song_id}`, {
+                const response = await fetch(`/api/song/${song_id}`, {
                   method: 'DELETE',
                   headers: {
                     'Content-Type': 'application/json'

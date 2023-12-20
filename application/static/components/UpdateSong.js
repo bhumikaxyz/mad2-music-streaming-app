@@ -46,7 +46,7 @@ export default {
         async getSongDetails(songId) {
             console.log('Song ID:', songId);
             try {
-              const response = await fetch(`http://127.0.0.1:5000/api/song/${songId}`);
+              const response = await fetch(`/api/song/${songId}`);
               if (response.ok) {
                 const songDetails = await response.json();
                 this.song = songDetails;
@@ -61,7 +61,7 @@ export default {
           async updateSong() {
             try {
                 console.log('updateSong method called');
-                const response = await fetch(`http://127.0.0.1:5000/api/song/${this.$route.params.id}`, {
+                const response = await fetch(`/api/song/${this.$route.params.id}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json'

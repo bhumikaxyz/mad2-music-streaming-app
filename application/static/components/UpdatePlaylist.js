@@ -47,7 +47,7 @@ export default {
     methods: {
         async getSongs() {
             try {
-              const response = await fetch('http://127.0.0.1:5000/api/songs');
+              const response = await fetch('/api/songs');
               if (response.ok) {
                 this.songs = await response.json();
               } else {
@@ -61,7 +61,7 @@ export default {
 
         async getPlaylistDetails(playlistId) {
             try {
-                const response = await fetch(`http://127.0.0.1:5000/api/playlist/${playlistId}`, 
+                const response = await fetch(`/api/playlist/${playlistId}`, 
                 
                 {
                 method: 'GET',
@@ -92,7 +92,7 @@ export default {
               };
               const playlistId = this.$route.params.id;
               console.log(this.$route.params)
-              const response = await fetch(`http://127.0.0.1:5000/api/playlist/${playlistId}`, {
+              const response = await fetch(`/api/playlist/${playlistId}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',

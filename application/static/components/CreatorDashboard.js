@@ -102,7 +102,7 @@ methods: {
 
     async getCreatorStats() {
         try {
-          const response = await fetch('http://127.0.0.1:5000/api/creator_statistics', {
+          const response = await fetch('/api/creator_statistics', {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('access-token')}`,
             },
@@ -119,7 +119,7 @@ methods: {
       },
       async getUserAlbums() {
         try {
-          const response = await fetch('http://127.0.0.1:5000/api/albums', {
+          const response = await fetch('/api/albums', {
             headers: {
               Authorization: `Bearer ${localStorage.getItem('access-token')}`,
             },
@@ -138,7 +138,7 @@ methods: {
 
       async buttonDeleteAlbum(albumId) {
         try {
-          const response = await fetch(`http://127.0.0.1:5000/api/album/${albumId}`, {
+          const response = await fetch(`/api/album/${albumId}`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',

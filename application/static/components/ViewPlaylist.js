@@ -44,7 +44,7 @@ export default {
 
         async getPlaylistDetails(playlistId) {
             try {
-                const response = await fetch(`http://127.0.0.1:5000/api/playlist/${playlistId}`, 
+                const response = await fetch(`/api/playlist/${playlistId}`, 
                 
                 {
                 method: 'GET',

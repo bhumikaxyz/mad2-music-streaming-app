@@ -64,7 +64,7 @@ export default {
     methods: {
         async getSongs() {
             try {
-                const response = await fetch('http://127.0.0.1:5000/api/songs');
+                const response = await fetch('/api/songs');
                 if (response.ok) {
                   this.songs = await response.json();
                 } else {
@@ -78,7 +78,7 @@ export default {
 
           async getAlbum(albumId) {
             try {
-              const response = await fetch(`http://127.0.0.1:5000/api/album/${albumId}`);
+              const response = await fetch(`/api/album/${albumId}`);
               if (response.ok) {
                 const albumData = await response.json();
                 this.formData = { ...albumData.album }; // Update formData with the fetched album data
@@ -94,7 +94,7 @@ export default {
         async submitForm() {
             try {
               const albumId = this.$route.params.id;
-              const response = await fetch(`http://127.0.0.1:5000/api/album/${albumId}`, {
+              const response = await fetch(`/api/album/${albumId}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',

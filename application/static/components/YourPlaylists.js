@@ -48,7 +48,7 @@ export default {
     },
     methods: {
         getPlaylists() {
-            fetch('http://127.0.0.1:5000/api/playlists', {
+            fetch('/api/playlists', {
               method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ export default {
 
         async buttonDeletePlaylist(playlist_id) {
             try {
-                const response = await fetch(`http://127.0.0.1:5000/api/playlist/${playlist_id}`, {
+                const response = await fetch(`/api/playlist/${playlist_id}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',

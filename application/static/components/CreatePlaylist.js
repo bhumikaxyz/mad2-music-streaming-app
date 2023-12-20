@@ -48,7 +48,7 @@ export default {
     methods: {
         async getSongs() {
             try {
-              const response = await fetch('http://127.0.0.1:5000/api/songs');
+              const response = await fetch('/api/songs');
               if (response.ok) {
                 this.songs = await response.json();
               } else {
@@ -73,7 +73,7 @@ export default {
               songs: selectedSongs,
             };
       
-            fetch('http://127.0.0.1:5000/api/playlists', {
+            fetch('/api/playlists', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

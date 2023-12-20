@@ -61,7 +61,7 @@ export default {
       console.log("Song ID:", songId);
       try {
         const response = await fetch(
-          `http://127.0.0.1:5000/api/song/${songId}`
+          `/api/song/${songId}`
         );
         if (response.ok) {
           const songDetails = await response.json();
@@ -77,7 +77,7 @@ export default {
     likeSong() {
         const songId = this.song.id; // Replace with the actual property that stores the song ID
         const like = this.likeCheckbox;
-        fetch(`http://127.0.0.1:5000/api/like/${songId}`, {
+        fetch(`/api/like/${songId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ export default {
         const rating = this.selectedRating;
 
         // Make a request to your backend API to update the rating
-        fetch(`http://127.0.0.1:5000/api/rate/${songId}`, {
+        fetch(`/api/rate/${songId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

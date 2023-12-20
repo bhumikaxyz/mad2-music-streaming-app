@@ -4,7 +4,7 @@ export default {
           try {
             const token = localStorage.getItem('access-token');
     
-            const res = await fetch('http://127.0.0.1:5000/api/signout', {
+            const res = await fetch('/api/signout', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

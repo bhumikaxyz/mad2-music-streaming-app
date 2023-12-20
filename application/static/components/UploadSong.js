@@ -63,7 +63,7 @@ methods: {
           formData.append('artist', this.formData.artist);
           formData.append('lyrics', this.formData.lyrics);
           formData.append('file', this.formData.selectedFile);
-          const response = await fetch('http://127.0.0.1:5000/api/songs', {
+          const response = await fetch('/api/songs', {
             method: 'POST',
             body: formData
           })

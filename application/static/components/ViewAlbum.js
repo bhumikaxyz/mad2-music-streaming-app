@@ -46,7 +46,7 @@ export default {
         async getAlbumDetails(albumId) {
             try {
             //   const albumId = this.$route.params.albumId;
-              const response = await fetch(`http://127.0.0.1:5000/api/album/${albumId}`);
+              const response = await fetch(`/api/album/${albumId}`);
               
               if (response.ok) {
                 const albumData = await response.json();

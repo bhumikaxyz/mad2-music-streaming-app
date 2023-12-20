@@ -132,7 +132,7 @@ export default {
         methods: {
             async getSongs() {
                 try {
-                  const response = await fetch('http://127.0.0.1:5000/api/admin_songs');
+                  const response = await fetch('/api/admin_songs');
                   if (response.ok) {
                     this.songs = await response.json();
                   } else {
@@ -144,7 +144,7 @@ export default {
               },
               async getCreators() {
                 try {
-                  const response = await fetch('http://127.0.0.1:5000/api/all_creators');
+                  const response = await fetch('/api/all_creators');
                   if (response.ok) {
                     this.creators = await response.json();
                   } else {
@@ -156,7 +156,7 @@ export default {
               },
               async getSummary() {
                 try {
-                  const response = await fetch('http://127.0.0.1:5000/api/admin_statistics');
+                  const response = await fetch('/api/admin_statistics');
                   if (response.ok) {
                     this.summary = await response.json();
                   } else {
@@ -168,7 +168,7 @@ export default {
               },
             //   async flagSong(songId, response) {
             //     try {
-            //       await fetch(`http://127.0.0.1:5000/api/flag_song/${songId}`, {
+            //       await fetch(`/api/flag_song/${songId}`, {
             //         method: 'PUT',
             //         headers: {
             //           'Content-Type': 'application/json',
@@ -182,7 +182,7 @@ export default {
             //   },
             //   async flagCreator(creatorId, response) {
             //     try {
-            //       await fetch(`http://127.0.0.1:5000/api/flag_creator/${creatorId}`, {
+            //       await fetch(`/api/flag_creator/${creatorId}`, {
             //         method: 'PUT',
             //         headers: {
             //           'Content-Type': 'application/json',
@@ -199,7 +199,7 @@ export default {
                 try {
                   song.is_flagged = !song.is_flagged;
         
-                  await fetch(`http://127.0.0.1:5000/api/flag_song/${song.id}`, {
+                  await fetch(`/api/flag_song/${song.id}`, {
                     method: 'PUT',
                     headers: {
                       'Content-Type': 'application/json',
@@ -216,7 +216,7 @@ export default {
                 try {
                   creator.is_flagged = !creator.is_flagged;
         
-                  await fetch(`http://127.0.0.1:5000/api/flag_creator/${creator.id}`, {
+                  await fetch(`/api/flag_creator/${creator.id}`, {
                     method: 'PUT',
                     headers: {
                       'Content-Type': 'application/json',
