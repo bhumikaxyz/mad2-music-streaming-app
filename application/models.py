@@ -82,7 +82,14 @@ class Album(db.Model):
     timestamp = db.Column(db.DateTime, server_default=func.now())
 
     songs = db.relationship('Song', backref = 'album', lazy = True)
+
+    @property
+    def artist_name(self):
+        return Artist.query.get(self.artist_id).name
     
+    @property
+    def album_songs(self):
+        return len(self.songs)
     def __repr__(self):
         return f'{self.name}'
 
