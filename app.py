@@ -18,14 +18,14 @@ cache.init_app(app)
 
 from schedules import create_csv
 from flask import jsonify
-@app.get('/download-csv')
-def csv_download():
-    import time 
-    task = create_csv.delay()
-    return jsonify({"task-id": task.id})   
+# @app.get('/download-csv')
+# def csv_download():
+#     import time 
+#     task = create_csv.delay()
+#     return jsonify({"task-id": task.id})   
 
 
-@app.route('/export-csv')
+@app.route('/download-csv')
 # @jwt_required()
 def export_csv():
     current_user_id = 1
@@ -35,7 +35,7 @@ def export_csv():
     # return "DSasd"
     return jsonify({"task_id":task.id}), 200
 
-@app.route('/get_csv/<task_id>')
+@app.route('/get-csv/<task_id>')
 def get_csv(task_id):
     from celery.result import AsyncResult
     from schedules import create_csv

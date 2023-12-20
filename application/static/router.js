@@ -16,6 +16,8 @@ import CreatorDashboard from './components/CreatorDashboard.js'
 import CreateAlbum from './components/CreateAlbum.js'
 import ViewAlbum from './components/ViewAlbum.js'
 import UpdateAlbum from './components/UpdateAlbum.js'
+import CreatorRegistration from './components/CreatorRegistration.js'
+
 
 
 
@@ -99,6 +101,11 @@ const routes = [
             path: '/update-album/:id',
             component: UpdateAlbum,
             name: "Update Album"
+        },
+        {
+            path: '/creator-registration',
+            component: CreatorRegistration,
+            name: "Creator Registration"
         },
 
     ];

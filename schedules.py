@@ -15,8 +15,8 @@ import celery_config as celery_config
 #
 from application import app as flask_app
 
-print("broker",celery_config.CELERY_BROKER_URL)
-print("result",celery_config.CELERY_RESULT_BACKEND)
+# print("broker",celery_config.CELERY_BROKER_URL)
+# print("result",celery_config.CELERY_RESULT_BACKEND)
 
 app = Celery()
 app.conf.update(

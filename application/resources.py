@@ -188,28 +188,6 @@ api.add_resource(UserLogin, '/signin')
 
 #============================================== USER =====================================================
 
-creator_register_parser = reqparse.RequestParser()
-creator_register_parser.add_argument('response', type=bool, default=False)
-
-class CreatorRegistration(Resource):
-    def put(self, user_id):
-        args = creator_register_parser.parse_args()
-        user = User.query.get(user_id)
-        if user and not user.is_creator:
-            if args['response']:
-                user.is_creator = True
-                db.session.commit()
-                return {'message': 'Account upgraded to creator.'}, 201
-            else:
-                return {'message': 'User account.'}, 201
-        else:
-            return {'message': 'NOTHING'}, 404    
-
-
-
-api.add_resource(CreatorRegistration, '/register_creator/<int:user_id>')
-
-
 profile_parser = reqparse.RequestParser()
 profile_parser.add_argument('name', type=str)
 profile_parser.add_argument('username', type=str)
@@ -237,7 +215,37 @@ class UpdateProfile(Resource):
 
 api.add_resource(UpdateProfile, '/update_profile/<int:user_id>')
 
-#============================================= CREATOR =====================================================
+#============================================= CREATOR =========================================================
+
+creator_register_parser = reqparse.RequestParser()
+creator_register_parser.add_argument('response', type=bool, default=False)
+
+class CreatorRegistration(Resource):
+    @jwt_required()
+    def put(self):
+        args = creator_register_parser.parse_args()
+        current_user_id = get_jwt_identity()
+        user = User.query.get(current_user_id)
+        if user and not user.is_creator:
+            if args['response']:
+                user_role = Role.query.filter_by(name='creator').first()
+                if not user_role:
+                    user_role = Role(name='creator')
+                    db.session.add(user_role)
+                    db.session.commit()
+
+                user.roles.append(user_role)
+                user.is_creator = True
+                db.session.commit()
+                return {'message': 'Account upgraded to creator.'}, 201
+            else:
+                return {'message': 'User account.'}, 201
+        else:
+            return {'message': 'NOTHING'}, 404    
+
+
+
+api.add_resource(CreatorRegistration, '/register_creator')
 
 class CreatorResource(Resource):
     def get(self):

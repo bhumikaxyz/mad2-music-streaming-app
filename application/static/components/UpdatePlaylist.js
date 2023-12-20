@@ -81,8 +81,7 @@ export default {
             } catch (error) {
                 console.error('Error fetching playlist details', error);
             }
-            
-              
+                    
         },
 
         async updatePlaylist() {
