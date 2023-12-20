@@ -27,8 +27,8 @@ export default {
                 </div>
             </div>
 
-            <div>
-            <button @click="downloadResource" class="btn btn-success">Download</button>
+            <div class="justify-content-center mb-3">
+            <button @click="downloadResource" class="btn btn-primary">Download Report</button>
             <span v-if='isWaiting'> Waiting... </span>
             </div>
 

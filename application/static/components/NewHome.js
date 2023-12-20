@@ -24,7 +24,7 @@ export default {
 
         <!-- Add Song button for creator -->
           <h2 class="text-end">
-            <button class="btn btn-success btn-sm" @click='buttonAddSong'>+ Add Song</button>
+            <button v-if="isCreator" class="btn btn-success btn-sm" @click='buttonAddSong'>+ Add Song</button>
           </h2>  
         </div>
 
@@ -43,8 +43,8 @@ export default {
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="btn-group margin-right-2">
                         <button type="button" class="btn btn-sm btn-outline-secondary" @click='buttonPlaySong(song.id)'>Play</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" @click='buttonEditSong(song.id)'>Edit</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary"@click='buttonDeleteSong(song.id)'>Delete</button>
+                        <button v-if="isCreator" type="button" class="btn btn-sm btn-outline-secondary" @click='buttonEditSong(song.id)'>Edit</button>
+                        <button v-if="isCreator" type="button" class="btn btn-sm btn-outline-secondary"@click='buttonDeleteSong(song.id)'>Delete</button>
                      </div>
                     <small class="text-body-secondary">{{ song.duration }}</small>
                 </div>
@@ -80,14 +80,45 @@ export default {
     data() {
         return {
             songs: [],
-            albums: []
+            albums: [],
+            isAdmin: false,
+            isCreator: false,
+            isUser: false
         }   
     },
     mounted() {
         this.getSongs();
-        this.getAlbums()
+        this.getAlbums();
+        this.getUserRole();
     },
     methods: {
+      async getUserRole() {
+        try {
+          const response = await fetch('http://127.0.0.1:5000/api/user_role', {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
+            },
+          });
+  
+          if (response.ok) {
+            const responseData = await response.json();
+            const roles = responseData.roles;
+            console.log('User roles:', roles);
+            this.isAdmin = roles.includes('admin');
+            this.isCreator = roles.includes('creator');
+            this.isUser = roles.includes('user');
+            this.isAuthenticated = true;
+          } else {
+            // Handle error response
+            console.error('Error fetching user role:', response.status);
+          }
+        } catch (error) {
+          // Handle fetch error
+          console.error('Error during fetch:', error);
+        }
+      },
         async getSongs() {
             try {
               const response = await fetch('/api/songs');

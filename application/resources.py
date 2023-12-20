@@ -215,6 +215,29 @@ class UpdateProfile(Resource):
 
 api.add_resource(UpdateProfile, '/update_profile/<int:user_id>')
 
+class UserRoleResource(Resource):
+    @jwt_required()
+    def get(self):
+        try:
+            current_user_id = get_jwt_identity()
+
+            user = User.query.get(current_user_id)
+
+            if user:
+                # Get the roles associated with the user
+                roles = [role.name for role in user.roles]
+                return {'roles': roles}, 200
+            else:
+                return {'message': 'User not found'}, 404
+
+        except Exception as e:
+            return {'message': str(e)}, 500
+
+# Add the API resource to your Flask app
+        
+api.add_resource(UserRoleResource, '/user_role')
+
+
 #============================================= CREATOR =========================================================
 
 creator_register_parser = reqparse.RequestParser()

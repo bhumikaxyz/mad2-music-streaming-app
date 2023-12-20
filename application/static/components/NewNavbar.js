@@ -29,17 +29,19 @@ const NewNavbar = Vue.component('NewNavbar', {
       >
         <div class="ms-auto d-flex mx-5">
 
-          <router-link v-if="isAuthenticated" class="nav-link active" to="/userhome">Home</router-link>
+          <router-link v-if="isAuthenticated && (isUser || isCreator)" class="nav-link active" to="/userhome">Home</router-link>
 
-          <router-link v-if="isAuthenticated" class="nav-link active" to="/creator-dashboard">Dashboard</router-link>
+          <router-link v-if="isAuthenticated && isUser && !isCreator" class="nav-link active" to="/creator-registration">Creator Account</router-link>
 
-          <router-link v-if="isAuthenticated" class="nav-link active" to="/your-playlists"
+          <router-link v-if="isAuthenticated && isCreator" class="nav-link active" to="/creator-dashboard">Dashboard</router-link>
+
+          <router-link v-if="isAuthenticated && (isUser || isCreator)" class="nav-link active" to="/your-playlists"
             >Your Playlists</router-link
           >
 
-          <router-link v-if="isAuthenticated" class="nav-link active" to="">Profile</router-link>
-
-          <router-link v-if="isAuthenticated" class="nav-link active" to="/admin-dashboard">Admin Dashboard</router-link>
+          <router-link v-if="isAuthenticated && (isUser || isCreator)" class="nav-link active" to="">Profile</router-link>
+        
+          <router-link v-if="isAuthenticated && isAdmin" class="nav-link active" to="/admin-dashboard">Admin Dashboard</router-link>
 
           <button v-if="isAuthenticated" class="nav-link active" @click='logout'>Logout</button>
           
@@ -50,7 +52,10 @@ const NewNavbar = Vue.component('NewNavbar', {
 
   data () {
     return {
-      isAuthenticated: false
+      isAuthenticated: false,
+      isAdmin: false,
+      isCreator: false,
+      isUser: false
     }
   },
   beforeMount() {
@@ -71,6 +76,8 @@ const NewNavbar = Vue.component('NewNavbar', {
 
       console.log("auth status", this.isAuthenticated);
 
+      this.getUserRole();
+
   },
   // watch: {
   //   isAuthenticated: function (oldValue, newValue) {
@@ -82,6 +89,33 @@ const NewNavbar = Vue.component('NewNavbar', {
   //   },
   // },
   methods: {
+    async getUserRole() {
+      try {
+        const response = await fetch('http://127.0.0.1:5000/api/user_role', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
+          },
+        });
+
+        if (response.ok) {
+          const responseData = await response.json();
+          const roles = responseData.roles;
+          console.log('User roles:', roles);
+          this.isAdmin = roles.includes('admin');
+          this.isCreator = roles.includes('creator');
+          this.isUser = roles.includes('user');
+          this.isAuthenticated = true;
+        } else {
+          // Handle error response
+          console.error('Error fetching user role:', response.status);
+        }
+      } catch (error) {
+        // Handle fetch error
+        console.error('Error during fetch:', error);
+      }
+    },
     logout() {
       try {
         localStorage.removeItem('access-token');
