@@ -5,6 +5,7 @@ from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 # from application.sec import datastore
 # from flask_security.utils import get_random_token
 from app_cache import cache
+from utils import send_email
 from worker import celery_init_app
 with app.app_context():
     db.create_all()
@@ -47,6 +48,12 @@ def get_csv(task_id):
         return send_file(f'../export1.csv', as_attachment=True)
     else:
         return jsonify({"task_state":task.state}), 200
+
+
+@app.get('/send_email')
+def email_Sender():
+    send_email("21f1007026@ds.study.iitm.ac.in","test sube","test messgae","text","export1.csv")
+    return "email sent"
 
 
 

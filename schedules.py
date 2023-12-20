@@ -1,22 +1,9 @@
-import time
+
 from celery import Celery
 from celery.schedules import crontab
-# from routes import send_email
 import celery_config as celery_config
 
-
-# celery is used for two purposes
-   # to do background tasks
-    # to schedule tasks
-
-# what is a background task?
-    # a task that runs in the background without blocking the main thread
-    # ex: sending email, generating pdf, sending sms, etc
-#
 from application import app as flask_app
-
-# print("broker",celery_config.CELERY_BROKER_URL)
-# print("result",celery_config.CELERY_RESULT_BACKEND)
 
 app = Celery()
 app.conf.update(
@@ -46,31 +33,20 @@ from jinja2 import Template
 
 @app.task
 def monthly_report():
-    from model  import User
     with flask_app.app_context():
-        users = User.query.all()
+        users = get_users()
     for user in users:
-        with open('test.html', 'r') as f:
-            if user.roles[0].name == 'user':    
-                template = Template(f.read())
-                send_email(user.email, "grocery app Monthly report", template.render(email=user.email,name=user.user_name),content='html',attachement_file=None)
+        
+        send_email(user, "grocery app Monthly report", "this is monthly report")
     return "mail sent"
 
 @app.task
-def daily_report():
-    from model  import User,Role
-    from model import db
-    from utils import get_users
+def daily_remainder():
     with flask_app.app_context():
-        users = get_users()
-    print("ssssssss", users)
-    
+        users = get_users() 
+        # users=["21f1007026@ds.study.iitm.ac.in"]
     for user in users:
-        
-        with open('test.html', 'r') as f:
-                if user[1]== 'user':
-                    template = Template(f.read())
-                    send_email(user[0], "grocery app Daily remainder gokul", "remainder to buy groceries", content='text', attachment_file=None)
+        send_email(user, "Remainder to purchase ", "we have exciting offers , dont miss it")
     return "mail sent"
 
 
@@ -79,25 +55,25 @@ from celery.schedules import crontab
 
 app.conf.beat_schedule = {
     'add-every-monday-morning': {
-        'task': 'schedules.add',
-        'schedule': crontab(hour=17, minute=16),
-        'args': (16, 16),
+        'task': 'schedules.daily_remainder',
+        'schedule': crontab(hour=23, minute=3),
+        # 'args': (16, 16),
     },
     'send-monthly-report': {
         'task': 'schedules.monthly_report',
-        'schedule': crontab(hour=9,day_of_month=1)
+        'schedule': crontab(hour=6,day_of_month=1)
         
        
     },
     'send-daily-reminder': {
-        'task': 'schedules.daily_report',
+        'task': 'schedules.daily_remainder',
         'schedule': crontab(hour=1,minute=45),
         
         
        
     },
-    'send-every-10-seconds': {
-        'task':'schedules.daily_report',
+    'send-every-39-seconds': {
+        'task':'schedules.daily_remainder',
         'schedule': 30.0,
         
       
@@ -107,7 +83,7 @@ app.conf.beat_schedule = {
 }
 
 import csv, os
-from utils import csv_details
+from utils import csv_details, get_users, send_email
 
 
 @app.task
