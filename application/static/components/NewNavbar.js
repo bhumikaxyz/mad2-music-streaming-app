@@ -29,61 +29,67 @@ const NewNavbar = Vue.component('NewNavbar', {
       >
         <div class="ms-auto d-flex mx-5">
 
-          <router-link class="nav-link active" to="/userhome">Home</router-link>
+          <router-link v-if="isAuthenticated" class="nav-link active" to="/userhome">Home</router-link>
 
-          <router-link class="nav-link active" to="/creator-dashboard">Dashboard</router-link>
+          <router-link v-if="isAuthenticated" class="nav-link active" to="/creator-dashboard">Dashboard</router-link>
 
-          <router-link class="nav-link active" to="/your-playlists"
+          <router-link v-if="isAuthenticated" class="nav-link active" to="/your-playlists"
             >Your Playlists</router-link
           >
 
-          <router-link class="nav-link active" to="">Profile</router-link>
+          <router-link v-if="isAuthenticated" class="nav-link active" to="">Profile</router-link>
 
-          <a class="nav-link active" @click='logout'>Logout</a>
-          <router-link class="nav-link active" to="/admin-dashboard">Admin Dashboard</router-link>
+          <router-link v-if="isAuthenticated" class="nav-link active" to="/admin-dashboard">Admin Dashboard</router-link>
+
+          <button v-if="isAuthenticated" class="nav-link active" @click='logout'>Logout</button>
+          
         </div>
       </div>
     </div>
   </nav>`,
 
-  computed: {
-    authenticated() {
-    // Check if the access token is present in local storage
-    token = localStorage.getItem('access-token');
-    if (token) {
-      return true;
+  data () {
+    return {
+      isAuthenticated: false
     }
-    else {
-      return false;
-    }
-
-    } 
   },
-  
+  beforeMount() {
+      const token = localStorage.getItem('access-token');
+      
+      if (token) {
+        this.isAuthenticated = true;
+        this.reloadOnce = false;
+        // const decodedToken = jwt_decode(token);
+        // this.currentUserId = decodedToken.sub;
+        // console.log('Decoded User ID:', this.currentUserId);
+      }
+      else {
+        this.isAuthenticated = false;
+        this.reloadOnce = false;
+        this.$router.push({ path: '/' });
+      }
+
+      console.log("auth status", this.isAuthenticated);
+
+  },
+  // watch: {
+  //   isAuthenticated: function (oldValue, newValue) {
+
+  //     if (oldValue != newValue) {
+  //       console.log("i will reload");
+  //       location.reload();
+  //     }
+  //   },
+  // },
   methods: {
-    async logout() {
+    logout() {
       try {
-        const token = localStorage.getItem('access-token');
-
-        const res = await fetch('http://127.0.0.1:5000/api/signout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('access-token')}`,
-          },
-        });
-
-        if (res.ok) {
-          console.log('User logged out successfully');
-          // this.$store.commit('setAuthenticated', false);
-          console.log('Authenticated:', this.authenticated);
-          localStorage.removeItem('access-token');
-          console.log('token removed');
-          this.$router.push({ path: '/' });
-        } else {
-          const data = await res.json();
-          console.error('Logout failed', data.message);
-        }
+        localStorage.removeItem('access-token');
+        // Optionally, you can also reset any user-related data in your component or store
+        // Route the user to the '/' path
+        this.$router.push({ path: '/' });
+  
+        console.log('User logged out successfully');
       } catch (error) {
         console.error('Error during logout', error);
       }

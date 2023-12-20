@@ -42,7 +42,7 @@ export default {
         />
       </div>
   
-      <div><button class="btn btn-primary mt-3" @click='login' > Login </button></div>
+      <div><button class="btn btn-primary mt-3" @click='login'> Login </button></div>
     </div>
   </div>
   `,
@@ -56,19 +56,19 @@ export default {
         error: null
     }
   },
-  computed: {
-    authenticated() {
-    // Check if the access token is present in local storage
-    // return !!localStorage.getItem('access-token');
-      token = localStorage.getItem('access-token');
-      if (token) {
-      return true;
-      }
-      else {
-        return false;
-      }
-    } 
-  },
+  // computed: {
+  //   authenticated() {
+  //   // Check if the access token is present in local storage
+  //   // return !!localStorage.getItem('access-token');
+  //     token = localStorage.getItem('access-token');
+  //     if (token) {
+  //     return true;
+  //     }
+  //     else {
+  //       return false;
+  //     }
+  //   } 
+  // },
   methods: {
     async login() {
       const res = await fetch('http://127.0.0.1:5000/api/signin', {
@@ -81,10 +81,10 @@ export default {
       const data = await res.json()
       if (res.ok) {
         localStorage.setItem('access-token', data.access_token)
-        console.log("token saved")
+        console.log("token saved");
         // localStorage.setItem('role', data.role)
         // this.$store.commit('setAuthenticated', true);
-        console.log('Authenticated:', this.authenticated);
+        // console.log('Authenticated:', this.authenticated);
         this.$router.push({ path: '/userhome' })
       } else {
         this.error = data.message

@@ -119,9 +119,26 @@ class UserRegistration(Resource):
         if existing_user:
             return {'message': 'User already exists.'}, 404
         else:
+            user_role = Role.query.filter_by(name='user').first()
+            if not user_role:
+                # Create the role if it doesn't exist
+                user_role = Role(name='user')
+                db.session.add(user_role)
+                db.session.commit()
+
+            if args['username'] == 'admin' and args['password'] == 'admin':
+                user_role = Role.query.filter_by(name='admin').first()
+                if not user_role:
+                    user_role = Role(name='admin')
+                    db.session.add(user_role)
+                    db.session.commit()
+
+
             hashed_password = generate_password_hash(args['password'])
             user = User(name=args['name'], username=args['username'], password_hash=hashed_password)
             user.fs_uniquifier = secrets.token_hex(16)
+            user.roles.append(user_role)  # Assign the role to the user
+
             db.session.add(user)
             db.session.commit()
             return {'message': 'Successfully registered'}, 201
@@ -150,6 +167,7 @@ class UserLogin(Resource):
                 
                 if check_password_hash(user.password_hash, password):
                     access_token = create_access_token(identity=user.id)
+                    print(user.roles)
                     return jsonify({'status': 'success','message': 'Successfully logged in.', 'access_token': access_token, "username": username})
                 else:
                     return {'message': 'Incorrect username or password.'}, 404
@@ -160,12 +178,12 @@ class UserLogin(Resource):
 api.add_resource(UserLogin, '/signin')
 
 
-class UserLogout(Resource):
-    def post(self):
-        # current_user = get_jwt_identity() 
-        return jsonify({'status': 'success', 'message': 'Successfully logged out user'})
+# class UserLogout(Resource):
+#     def post(self):
+#         # current_user = get_jwt_identity() 
+#         return jsonify({'status': 'success', 'message': 'Successfully logged out user'})
 
-api.add_resource(UserLogout, '/signout')
+# api.add_resource(UserLogout, '/signout')
 
 
 #============================================== USER =====================================================
@@ -513,10 +531,11 @@ class RateSongResource(Resource):
 api.add_resource(RateSongResource, '/rate/<int:song_id>')
 
 
-# =============================================== PLAYLISTS ================================================
+# =============================================== PLAYLISTS =======================================================
 
 playlist_parser = reqparse.RequestParser()
 playlist_parser.add_argument('name', type=str, required=True, help='Please provide a value')
+playlist_parser.add_argument('songs', type=int, action='append', required=True, help='Please provide a value')
 
 class PlaylistListResource(Resource):
     @jwt_required()
@@ -624,7 +643,7 @@ album_parser = reqparse.RequestParser()
 album_parser.add_argument('name', type=str, required=True, help='Please provide a value')
 album_parser.add_argument('genre', type=str, choices=('Pop', 'Metal', 'Classical', 'Other'), default='Other')
 album_parser.add_argument('artist', type=str, required=True, help='Please provide a value')
-album_parser.add_argument('songs', type=list, required=True, help='Please provide a value')
+album_parser.add_argument('songs', type=int, action='append', required=True, help='Please provide a value')
 
 class AlbumListResource(Resource):
     def get(self):
@@ -657,11 +676,18 @@ class AlbumListResource(Resource):
             creator_id=current_user_id
         )
 
-        song_ids = args['songs']
-        songs = Song.query.filter(Song.id.in_(song_ids), Song.creator_id == current_user_id).all()
-        album.songs = songs
-
         db.session.add(album)
+        db.session.commit()
+        album_id = album.id
+        print('album id', album_id)
+
+
+        song_ids = args['songs']
+        print("song ids", song_ids)
+        songs = Song.query.filter(Song.id.in_(song_ids)).all()
+        print(songs)
+        album.songs.extend(songs)
+
         db.session.commit()
 
         return album, 201 

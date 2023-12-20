@@ -38,8 +38,8 @@ export default {
 
     mounted() {
         const playlistId = this.$route.params.id;
-        console.log(this.$route.params)
-        console.log(playlistId)
+        // console.log(this.$route.params)
+        // console.log(playlistId)
         this.getPlaylistDetails(playlistId);
         this.getSongs();
     },
@@ -91,8 +91,9 @@ export default {
                 name: this.playlistName,
                 songs: this.selectedSongs,
               };
-          
-              const response = await fetch(`http://127.0.0.1:5000/api/playlist/${this.playlistId}`, {
+              const playlistId = this.$route.params.id;
+              console.log(this.$route.params)
+              const response = await fetch(`http://127.0.0.1:5000/api/playlist/${playlistId}`, {
                 method: 'PUT',
                 headers: {
                   'Content-Type': 'application/json',

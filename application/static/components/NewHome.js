@@ -66,9 +66,7 @@ export default {
                 </p>
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="btn-group">
-                        <button type="button" class="btn btn-sm btn-outline-secondary">View</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary">Edit</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary">Delete</button>
+                        <router-link :to="{name: 'View Album', params: { id: album.id }}"type="button" class="btn btn-sm btn-outline-secondary">View</router-link>
                      </div>
                 </div>
                 </div>
@@ -142,7 +140,7 @@ export default {
         
                 if (response.ok) {
                   console.log('Song deleted successfully');
-                  this.songs = this.songs.filter(song => song.id !== song_id);
+                  this.getSongs();
                 } else {
                   const errorData = await response.json();
                   console.error('Error deleting song:', errorData);

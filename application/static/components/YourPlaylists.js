@@ -86,6 +86,7 @@ export default {
 
                 if (response.ok) {
                     console.log('Playlist deleted successfully');
+                    this.getPlaylists();
     
                 } else {
                     console.error('Failed to delete playlist');

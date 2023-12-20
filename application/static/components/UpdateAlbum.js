@@ -26,7 +26,7 @@ export default {
                 <label class="form-control-label">Songs</label>
                 <div v-for="song in songs.songs" :key="song.id" class="form-check">
                 <input
-                    v-model="formData.songs"
+                    v-model="selectedSongs"
                     :value="song.id"
                     type="checkbox"
                     :id="song.id"
@@ -53,6 +53,7 @@ export default {
             },
             genreChoices: ['Pop', 'Metal', 'Classical', 'Other'],
             songs: [],
+            selectedSongs: []
           }
     },
     mounted() {
@@ -99,7 +100,7 @@ export default {
                   'Content-Type': 'application/json',
                   Authorization: `Bearer ${localStorage.getItem('access-token')}`,
                 },
-                body: JSON.stringify(this.formData),
+                body: JSON.stringify({ ...this.formData, songs: this.selectedSongs }),
               });
       
               if (!response.ok) {
