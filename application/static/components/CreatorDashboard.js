@@ -87,8 +87,9 @@ methods: {
       this.isWaiting = true
       const res = await fetch('/download-csv')
       const data = await res.json()
+      console.log(data)
       if (res.ok) {
-        const taskId = data['task-id']
+        const taskId = data['task_id']
         const intv = setInterval(async () => {
           const csv_res = await fetch(`/get-csv/${taskId}`)
           if (csv_res.ok) {
