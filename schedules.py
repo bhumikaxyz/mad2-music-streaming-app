@@ -24,7 +24,7 @@ app.conf.update(
         result_backend=celery_config.CELERY_RESULT_BACKEND
     )
 
-app.conf.timezone = "Asia/kolkata"
+app.conf.timezone = "Asia/Kolkata"
 app.conf.broker_connection_retry_on_startup=True
 
 @app.on_after_configure.connect
