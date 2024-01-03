@@ -27,13 +27,11 @@ from flask import jsonify
 
 
 @app.route('/download-csv')
-# @jwt_required()
+@jwt_required()
 def export_csv():
-    current_user_id = 1
+    current_user_id = get_jwt_identity()
     from schedules import create_csv
     task=create_csv.apply_async(args=[current_user_id])
-    print("current_user_id", current_user_id)
-    # return "DSasd"
     return jsonify({"task_id":task.id}), 200
 
 @app.route('/get-csv/<task_id>')
@@ -45,16 +43,9 @@ def get_csv(task_id):
     if task.state == 'PENDING':
         return jsonify({"task_state":task.state}), 200
     elif task.state == 'SUCCESS':
-        return send_file(f'../export1.csv', as_attachment=True)
+        return send_file(f'../report.csv', as_attachment=True)
     else:
         return jsonify({"task_state":task.state}), 200
-
-
-@app.get('/send_email')
-def email_Sender():
-    send_email("21f1007026@ds.study.iitm.ac.in","test sube","test messgae","text","export1.csv")
-    return "email sent"
-
 
 
 if __name__ == '__main__':

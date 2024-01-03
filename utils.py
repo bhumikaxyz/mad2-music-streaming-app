@@ -2,6 +2,7 @@
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 import smtplib
 from application.models import Album
@@ -20,7 +21,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-def send_email(to_address, subject, message):
+def send_email(to_address, subject, message, attachment_path=None):
 
     SMPTP_SERVER_HOST = 'smtp.gmail.com'
     SMPTP_SERVER_PORT = 587
@@ -30,13 +31,20 @@ def send_email(to_address, subject, message):
     msg['From'] = SENDER_ADDRESS
     msg['To']=to_address
     msg['Subject'] = subject
+    msg.attach(MIMEText(message, 'plain'))
+
+    if attachment_path:
+        with open(attachment_path, "rb") as attachment:
+            part = MIMEApplication(attachment.read(), Name=os.path.basename(attachment_path))
+            part['Content-Disposition'] = f'attachment; filename="{os.path.basename(attachment_path)}"'
+            msg.attach(part)
+
     try:
         s = smtplib.SMTP(host=SMPTP_SERVER_HOST,port=SMPTP_SERVER_PORT)
         s.starttls()
         s.login(SENDER_ADDRESS,SENDER_PASSWORD)
         s.send_message(msg)
         s.quit()
-        print("mail sent")
         return True
     except Exception as e:
         print(e)

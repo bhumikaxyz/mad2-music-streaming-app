@@ -1,1 +1,1 @@
-celery -A schedules worker -l info
+celery -A schedules worker -B -l info

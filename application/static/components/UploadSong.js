@@ -65,6 +65,9 @@ methods: {
           formData.append('file', this.formData.selectedFile);
           const response = await fetch('/api/songs', {
             method: 'POST',
+            headers: {
+              Authorization: 'Bearer ' + localStorage.getItem('access-token'),
+            },
             body: formData
           })
           console.log(formData)

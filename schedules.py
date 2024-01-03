@@ -14,14 +14,14 @@ app.conf.update(
 app.conf.timezone = "Asia/Kolkata"
 app.conf.broker_connection_retry_on_startup=True
 
-@app.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(30.0, test.s('world'), expires=10)
+# @app.on_after_configure.connect
+# def setup_periodic_tasks(sender, **kwargs):
+#     sender.add_periodic_task(30.0, test.s('world'), expires=10)
 
-    sender.add_periodic_task(
-        crontab(hour=17, minute=30, day_of_week=0),
-        test.s('Heyyyyy'),
-    )
+#     sender.add_periodic_task(
+#         crontab(hour=17, minute=30, day_of_week=0),
+#         test.s('Heyyyyy'),
+#     )
 
 @app.task
 def test(arg):
@@ -34,18 +34,20 @@ def test(arg):
 def monthly_report():
     with flask_app.app_context():
         users = get_users()
+        # users=["21f1006329@ds.study.iitm.ac.in"]
     for user in users:
-        
-        send_email(user, "cuhu: The Music App - Monthly report", "this is monthly report sent by music streaming app")
+        testfile = create_csv(1)
+        send_email(user, "cuhu: The Music App - Monthly report", "This is monthly report sent by music streaming app", testfile)
     return "mail sent"
 
 @app.task
 def daily_remainder():
     with flask_app.app_context():
         users = get_users() 
-        # users=["21f1006329@ds.study.iitm.ac.in"]
+        users=["21f1006329@ds.study.iitm.ac.in"]
+        print("in daily reminder")
     for user in users:
-        send_email(user, "Remainder to purchase the premium account ", "now listen to your favorite songs offline")
+        send_email(user, "Reminder to purchase the premium account ", "Now listen to your favorite songs offline")
     return "mail sent"
 
 
@@ -53,14 +55,15 @@ def daily_remainder():
 from celery.schedules import crontab
 
 app.conf.beat_schedule = {
-    'add-every-monday-morning': {
-        'task': 'schedules.daily_remainder',
-        'schedule': crontab(hour=23, minute=3),
-        # 'args': (16, 16),
-    },
+    # 'add-every-monday-morning': {
+    #     'task': 'schedules.daily_remainder',
+    #     'schedule': crontab(hour=13, minute=48),
+    #     # 'args': (16, 16),
+    # },
     'send-monthly-report': {
         'task': 'schedules.monthly_report',
-        'schedule': crontab(hour=6,day_of_month=1)
+        # 'schedule': crontab(hour=6,day_of_month=1),
+        'schedule': 30.0
         
        
     },
@@ -71,12 +74,12 @@ app.conf.beat_schedule = {
         
        
     },
-    'send-every-39-seconds': {
-        'task':'schedules.daily_remainder',
-        'schedule': 30.0,
+#     'send-every-30-seconds': {
+#         'task':'schedules.daily_remainder',
+#         'schedule': 30.0,
            
     
-}
+# }
 }
 
 import csv, os
@@ -93,7 +96,7 @@ def create_csv(user_id):
             result = csv_details(user_id)
         for row in result:
             data=[row[0],row[1],row[2],row[3],row[4]]
-            writer.writerow(data)  # to send file to user as download
+            writer.writerow(data) 
 
     
     return "report.csv"

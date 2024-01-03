@@ -397,6 +397,7 @@ class SongListResource(Resource):
     
 
     @marshal_with(song_fields)
+    @jwt_required()
     def post(self):
         title = request.form.get("title")
         lyrics = request.form.get("lyrics")
@@ -423,6 +424,7 @@ class SongListResource(Resource):
         song.filename = filename
         duration = get_audio_duration(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         song.duration = duration
+        song.creator_id = get_jwt_identity()
         db.session.add(song)
         db.session.commit()
         return song, 201
@@ -562,7 +564,7 @@ class RateSongResource(Resource):
 api.add_resource(RateSongResource, '/rate/<int:song_id>')
 
 
-# =============================================== PLAYLISTS =======================================================
+# =============================================== PLAYLISTS =================================================
 
 playlist_parser = reqparse.RequestParser()
 playlist_parser.add_argument('name', type=str, required=True, help='Please provide a value')
@@ -636,12 +638,11 @@ class PlaylistResource(Resource):
 
         # Update songs in the playlist
         if playlist and song_ids:
-            print("imhreee")
-            print(song_ids)
+            playlist.songs = []  # Clear existing 
             songs = Song.query.filter(Song.id.in_(song_ids)).all()
             playlist.songs.extend(songs)
    
-
+        playlist = Playlist.query.filter_by(id=playlist_id, user_id=current_user_id).first()
         db.session.commit()
 
         return playlist, 200    
